@@ -1,0 +1,134 @@
+@import '../../styles/variables';
+
+.hotel-card {
+  background: #fff;
+  border-radius: $border-radius-base;
+  overflow: hidden;
+  margin-bottom: $spacing-base;
+  box-shadow: $box-shadow;
+  
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.hotel-image {
+  width: 100%;
+  height: 300rpx;
+}
+
+.hotel-content {
+  padding: $spacing-base;
+}
+
+.hotel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: $spacing-sm;
+}
+
+.hotel-name {
+  font-size: $font-size-lg;
+  font-weight: 600;
+  color: $text-color;
+  flex: 1;
+  margin-right: $spacing-sm;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.hotel-rating {
+  background: linear-gradient(135deg, #ffd700, #ffa500);
+  border-radius: $border-radius-sm;
+  padding: 4rpx 12rpx;
+  display: flex;
+  align-items: center;
+  min-width: 80rpx;
+  justify-content: center;
+}
+
+.rating-text {
+  font-size: $font-size-lg;
+  font-weight: 700;
+  color: #fff;
+}
+
+.rating-label {
+  font-size: $font-size-sm;
+  color: #fff;
+  margin-left: 2rpx;
+}
+
+.hotel-address {
+  font-size: $font-size-sm;
+  color: $text-color-light;
+  margin-bottom: $spacing-base;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hotel-facilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+  margin-bottom: $spacing-base;
+}
+
+.facility-tag {
+  background: $background-color;
+  border-radius: $border-radius-sm;
+  padding: 4rpx 12rpx;
+}
+
+.facility-text {
+  font-size: $font-size-sm;
+  color: $text-color-light;
+}
+
+.hotel-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: $spacing-base;
+  border-top: 1rpx solid $border-color;
+}
+
+.price-section {
+  display: flex;
+  align-items: baseline;
+}
+
+.price-label {
+  font-size: $font-size-sm;
+  color: $text-color-light;
+  margin-right: $spacing-xs;
+}
+
+.price-amount {
+  font-size: $font-size-xl;
+  font-weight: 700;
+  color: $primary-color;
+}
+
+.price-unit {
+  font-size: $font-size-sm;
+  color: $text-color-light;
+  margin-left: 2rpx;
+}
+
+.book-button {
+  background: $primary-color;
+  border-radius: $border-radius-base;
+  padding: $spacing-sm $spacing-lg;
+}
+
+.book-text {
+  font-size: $font-size-base;
+  font-weight: 600;
+  color: #fff;
+}

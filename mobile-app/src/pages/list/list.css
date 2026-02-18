@@ -1,0 +1,59 @@
+.list-page {
+  padding: 24rpx;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.page-header {
+  margin-bottom: 32rpx;
+}
+
+.page-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #333;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.page-subtitle {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.filter-section {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+  text-align: center;
+}
+
+.filter-text {
+  font-size: 28rpx;
+  color: #999;
+}
+
+.hotels-list {
+  margin-bottom: 24rpx;
+}
+
+.loading-indicator {
+  text-align: center;
+  padding: 32rpx;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 64rpx 32rpx;
+}
+
+.empty-text {
+  font-size: 28rpx;
+  color: #999;
+}

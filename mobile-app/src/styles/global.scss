@@ -1,0 +1,62 @@
+@use 'variables' as *;
+
+/* 全局样式重置 */
+* {
+  box-sizing: border-box;
+}
+
+/* 基础样式 */
+page {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: $font-size-base;
+  color: $text-color;
+  background-color: #fff;
+  line-height: 1.5;
+}
+
+/* 重置边距 */
+body, h1, h2, h3, h4, h5, h6, p, ul, ol, li, figure, figcaption, blockquote, dl, dd {
+  margin: 0;
+  padding: 0;
+}
+
+/* 列表样式重置 */
+ul, ol {
+  list-style: none;
+}
+
+/* 链接样式 */
+a {
+  color: $primary-color;
+  text-decoration: none;
+}
+
+/* 图片响应式 */
+image {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* 通用工具类 */
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-column {
+  flex-direction: column;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
