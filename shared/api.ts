@@ -1,5 +1,3 @@
-import Taro from '@tarojs/taro';
-
 // 酒店接口定义
 export interface Hotel {
   id: number;
@@ -10,6 +8,8 @@ export interface Hotel {
   image: string;
   city: string;
   facilities: string[];
+  starRating?: number; // 星级评分
+  distance?: number;   // 距离（公里）
 }
 
 // 酒店查询参数
@@ -22,9 +22,10 @@ export interface HotelQueryParams {
   limit?: number;
   minPrice?: number;
   maxPrice?: number;
+  sort?: 'recommend' | 'price_asc' | 'price_desc' | 'rating_desc' | 'distance_asc';
 }
 
-// 模拟酒店数据
+// 模拟酒店数据 - 扩展更多数据
 const mockHotels: Hotel[] = [
   {
     id: 1,
@@ -32,9 +33,11 @@ const mockHotels: Hotel[] = [
     address: '北京市东城区王府井大街',
     price: 580,
     rating: 4.5,
-    image: 'https://example.com/hotel1.jpg',
+    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop',
     city: '北京',
-    facilities: ['免费WiFi', '停车场', '餐厅', '健身房']
+    facilities: ['免费WiFi', '停车场', '餐厅', '健身房'],
+    starRating: 4,
+    distance: 2.5
   },
   {
     id: 2,
@@ -42,9 +45,11 @@ const mockHotels: Hotel[] = [
     address: '上海市黄浦区中山东一路',
     price: 1200,
     rating: 4.8,
-    image: 'https://example.com/hotel2.jpg',
+    image: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&auto=format&fit=crop',
     city: '上海',
-    facilities: ['免费WiFi', '游泳池', '水疗中心', '餐厅']
+    facilities: ['免费WiFi', '游泳池', '水疗中心', '餐厅'],
+    starRating: 5,
+    distance: 3.1
   },
   {
     id: 3,
@@ -52,9 +57,11 @@ const mockHotels: Hotel[] = [
     address: '广州市越秀区环市东路',
     price: 420,
     rating: 4.2,
-    image: 'https://example.com/hotel3.jpg',
+    image: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&auto=format&fit=crop',
     city: '广州',
-    facilities: ['免费WiFi', '停车场', '会议室']
+    facilities: ['免费WiFi', '停车场', '会议室'],
+    starRating: 3,
+    distance: 1.8
   },
   {
     id: 4,
@@ -62,9 +69,11 @@ const mockHotels: Hotel[] = [
     address: '深圳市罗湖区建设路',
     price: 880,
     rating: 4.6,
-    image: 'https://example.com/hotel4.jpg',
+    image: 'https://images.unsplash.com/photo-1564501049418-3c27787d01e8?w=800&auto=format&fit=crop',
     city: '深圳',
-    facilities: ['免费WiFi', '游泳池', '健身房', '餐厅']
+    facilities: ['免费WiFi', '游泳池', '健身房', '餐厅'],
+    starRating: 4,
+    distance: 4.2
   },
   {
     id: 5,
@@ -72,9 +81,71 @@ const mockHotels: Hotel[] = [
     address: '杭州市西湖区杨公堤',
     price: 680,
     rating: 4.7,
-    image: 'https://example.com/hotel5.jpg',
+    image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&auto=format&fit=crop',
     city: '杭州',
-    facilities: ['免费WiFi', '停车场', '餐厅', '花园']
+    facilities: ['免费WiFi', '停车场', '餐厅', '花园'],
+    starRating: 4,
+    distance: 5.5
+  },
+  {
+    id: 6,
+    name: '成都锦江宾馆',
+    address: '成都市锦江区人民南路',
+    price: 520,
+    rating: 4.3,
+    image: 'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?w=800&auto=format&fit=crop',
+    city: '成都',
+    facilities: ['免费WiFi', '停车场', '餐厅', '会议室'],
+    starRating: 3,
+    distance: 2.1
+  },
+  {
+    id: 7,
+    name: '西安钟楼饭店',
+    address: '西安市碑林区南大街',
+    price: 380,
+    rating: 4.1,
+    image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&auto=format&fit=crop',
+    city: '西安',
+    facilities: ['免费WiFi', '停车场', '餐厅'],
+    starRating: 3,
+    distance: 3.8
+  },
+  {
+    id: 8,
+    name: '三亚亚龙湾度假酒店',
+    address: '三亚市亚龙湾国家旅游度假区',
+    price: 980,
+    rating: 4.9,
+    image: 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&auto=format&fit=crop',
+    city: '三亚',
+    facilities: ['免费WiFi', '游泳池', '私人海滩', '水疗中心', '餐厅'],
+    starRating: 5,
+    distance: 12.5
+  },
+  {
+    id: 9,
+    name: '南京金陵饭店',
+    address: '南京市鼓楼区汉中路',
+    price: 450,
+    rating: 4.4,
+    image: 'https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?w=800&auto=format&fit=crop',
+    city: '南京',
+    facilities: ['免费WiFi', '停车场', '餐厅', '健身房'],
+    starRating: 4,
+    distance: 2.9
+  },
+  {
+    id: 10,
+    name: '武汉光谷凯悦酒店',
+    address: '武汉市洪山区珞喻路',
+    price: 620,
+    rating: 4.6,
+    image: 'https://images.unsplash.com/photo-1568084680786-a84f91d1153c?w=800&auto=format&fit=crop',
+    city: '武汉',
+    facilities: ['免费WiFi', '游泳池', '健身房', '餐厅', '会议室'],
+    starRating: 4,
+    distance: 4.7
   }
 ];
 
@@ -101,6 +172,38 @@ export const getHotels = async (params: HotelQueryParams = {}): Promise<Hotel[]>
     filteredHotels = filteredHotels.filter(hotel => hotel.price <= params.maxPrice!);
   }
   
+  // 根据星级筛选（如果starRating参数存在）
+  if (params.sort === 'rating_desc') {
+    // 按评分排序已经在下面的排序逻辑中处理
+  }
+  
+  // 排序逻辑
+  if (params.sort) {
+    switch (params.sort) {
+      case 'price_asc':
+        filteredHotels.sort((a, b) => a.price - b.price);
+        break;
+      case 'price_desc':
+        filteredHotels.sort((a, b) => b.price - a.price);
+        break;
+      case 'rating_desc':
+        filteredHotels.sort((a, b) => b.rating - a.rating);
+        break;
+      case 'distance_asc':
+        filteredHotels.sort((a, b) => (a.distance || 0) - (b.distance || 0));
+        break;
+      case 'recommend':
+      default:
+        // 推荐排序：综合评分和价格
+        filteredHotels.sort((a, b) => {
+          const scoreA = a.rating * 20 - a.price / 50;
+          const scoreB = b.rating * 20 - b.price / 50;
+          return scoreB - scoreA;
+        });
+        break;
+    }
+  }
+  
   // 分页
   const page = params.page || 1;
   const limit = params.limit || 10;
@@ -125,22 +228,5 @@ export const getCities = async (): Promise<string[]> => {
   return cities;
 };
 
-// 真实API调用（Phase 4使用）
-export const fetchHotelsFromAPI = async (params: HotelQueryParams): Promise<Hotel[]> => {
-  try {
-    const response = await Taro.request({
-      url: '/api/hotels',
-      method: 'GET',
-      data: params
-    });
-    
-    if (response.statusCode === 200) {
-      return response.data as Hotel[];
-    } else {
-      throw new Error(`API请求失败: ${response.statusCode}`);
-    }
-  } catch (error) {
-    console.error('获取酒店数据失败:', error);
-    throw error;
-  }
-};
+// 真实API调用将在Phase 4实现，在mobile-app项目中创建专门的API文件
+// 例如：mobile-app/src/shared/api-taro.ts
