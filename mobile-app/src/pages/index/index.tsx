@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Image, Swiper, SwiperItem, Picker, Button, ScrollView } from '@tarojs/components';
+import React, { useState, useEffect, useMemo } from 'react';
+import { View, Text, Image, Swiper, SwiperItem, Picker, Button, ScrollView, Slider } from '@tarojs/components';
 import Taro from '@tarojs/taro';
-import { getCities, getHotels, Hotel, HotelQueryParams } from '../../../../shared/api';
+import { getHotels, Hotel, HotelQueryParams } from '../../../../shared/api';
 import './index.css';
+import NearbyHotelCard from '../../components/NearbyHotelCard';
 
 // 广告图片数据
 const adImages = [
@@ -19,12 +20,22 @@ const accommodationTypes = [
   { id: 4, name: '度假村', icon: '🌴' },
 ];
 
-// 地点推荐数据
+// 地点推荐数据（地标更丰富，便于滑动验证）
 const locationRecommendations = [
   { id: 1, name: '故宫', distance: '2.5km', type: '文化古迹' },
   { id: 2, name: '天安门', distance: '3.1km', type: '地标建筑' },
   { id: 3, name: '王府井', distance: '1.8km', type: '商业中心' },
   { id: 4, name: '颐和园', distance: '12km', type: '公园景区' },
+  { id: 5, name: '清华大学', distance: '15km', type: '高校' },
+  { id: 6, name: '北京大学', distance: '16km', type: '高校' },
+  { id: 7, name: '中国人民大学', distance: '14km', type: '高校' },
+  { id: 8, name: '国贸中心', distance: '6km', type: '商务区' },
+  { id: 9, name: '金融街', distance: '7km', type: '金融区' },
+  { id: 10, name: '招商银行国贸支行', distance: '6.5km', type: '银行' },
+  { id: 11, name: '建设银行建国门支行', distance: '5.8km', type: '银行' },
+  { id: 12, name: '北京站', distance: '4.2km', type: '交通枢纽' },
+  { id: 13, name: '北京西站', distance: '10.3km', type: '交通枢纽' },
+  { id: 14, name: '首都机场T3航站楼', distance: '28km', type: '机场' },
 ];
 
 // 分类导航数据
@@ -33,6 +44,21 @@ const categoryNavs = [
   { id: 2, name: '附近热卖', icon: '🔥', color: '#ffa726' },
   { id: 3, name: '超值低价', icon: '💰', color: '#66bb6a' },
 ];
+
+// 国内城市列表
+const domesticCities = ['北京', '上海', '广州', '深圳', '杭州', '成都', '重庆', '武汉', '西安', '南京'];
+// 国外城市列表
+const foreignCities = ['东京', '首尔', '新加坡', '曼谷', '巴黎', '伦敦', '纽约', '悉尼', '迪拜', '洛杉矶'];
+
+// 价格区间快捷选项（0~500+）
+const priceQuickOptions = [
+  { label: '¥0-200', value: [0, 200] },
+  { label: '¥200-300', value: [200, 300] },
+  { label: '¥300-500', value: [300, 500] },
+  { label: '¥500以上', value: [500, 600] },
+];
+
+const PRICE_MAX = 600; // 滑块最大值，表示 500+
 
 const IndexPage: React.FC = () => {
   // 状态管理
@@ -44,8 +70,17 @@ const IndexPage: React.FC = () => {
   const [nights, setNights] = useState(2);
   const [priceRange, setPriceRange] = useState([200, 800]);
   const [starRating, setStarRating] = useState(3);
-  const [cities, setCities] = useState<string[]>([]);
   const [nearbyHotels, setNearbyHotels] = useState<Hotel[]>([]);
+
+  // 新增状态
+  const [isHourlyRoom, setIsHourlyRoom] = useState(false);
+  const [roomCount, setRoomCount] = useState(1);
+  const [adultCount, setAdultCount] = useState(2);
+  const [childCount, setChildCount] = useState(0);
+  const [showPriceStarModal, setShowPriceStarModal] = useState(false);
+
+  // 国内/国外切换时使用对应城市列表
+  const cities = useMemo(() => (isDomestic ? domesticCities : foreignCities), [isDomestic]);
 
   // 初始化数据
   useEffect(() => {
@@ -53,12 +88,17 @@ const IndexPage: React.FC = () => {
     getCurrentLocation();
   }, []);
 
+  // 切换国内/国外时，若当前城市不在新列表中则重置为列表第一项
+  useEffect(() => {
+    const list = isDomestic ? domesticCities : foreignCities;
+    if (!list.includes(location.city)) {
+      setLocation(prev => ({ ...prev, city: list[0] || '北京' }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 仅随 isDomestic 切换时同步城市
+  }, [isDomestic]);
+
   const loadInitialData = async () => {
     try {
-      const cityList = await getCities();
-      setCities(cityList);
-      
-      // 加载附近酒店
       const hotels = await getHotels({ city: '北京', limit: 6 });
       setNearbyHotels(hotels);
     } catch (error) {
@@ -129,7 +169,7 @@ const IndexPage: React.FC = () => {
       minPrice: priceRange[0],
       maxPrice: priceRange[1],
     };
-    
+
     Taro.navigateTo({
       url: `/pages/list/list?${new URLSearchParams(params as any).toString()}`,
     });
@@ -162,189 +202,164 @@ const IndexPage: React.FC = () => {
     });
   };
 
+  const handlePriceMinChange = (e: any) => {
+    const v = Number(e.detail.value);
+    setPriceRange(prev => [v, prev[1] < v ? v : prev[1]]);
+  };
+  const handlePriceMaxChange = (e: any) => {
+    const v = Number(e.detail.value);
+    setPriceRange(prev => [prev[0] > v ? v : prev[0], v]);
+  };
+  const applyQuickPrice = (value: [number, number]) => setPriceRange([value[0], value[1]]);
+
   return (
-    <ScrollView className="index-page" scrollY>
-      {/* 1. 广告轮播板块 */}
-      <View className="ad-section">
-        <Swiper
-          className="ad-swiper"
-          indicatorDots
-          indicatorColor="rgba(255, 255, 255, 0.6)"
-          indicatorActiveColor="#fff"
-          autoplay
-          circular
-        >
-          {adImages.map((img, index) => (
-            <SwiperItem key={index}>
-              <Image className="ad-image" src={img} mode="aspectFill" />
-            </SwiperItem>
-          ))}
-        </Swiper>
-      </View>
-
-      {/* 2. 住房分类板块 */}
-      <View className="accommodation-section">
-        <Text className="section-title">住宿类型</Text>
-        <View className="domestic-foreign">
-          <View 
-            className={`tab ${isDomestic ? 'active' : ''}`}
-            onClick={() => setIsDomestic(true)}
+    <View className="index-page">
+      <ScrollView className="index-scroll" scrollY>
+        <View className="ad-section">
+          <Swiper
+            className="ad-swiper"
+            indicatorDots
+            indicatorColor="rgba(255, 255, 255, 0.6)"
+            indicatorActiveColor="#fff"
+            autoplay
+            circular
           >
-            <Text>国内</Text>
-          </View>
-          <View 
-            className={`tab ${!isDomestic ? 'active' : ''}`}
-            onClick={() => setIsDomestic(false)}
-          >
-            <Text>国外</Text>
-          </View>
-        </View>
-        
-        <View className="type-grid">
-          {accommodationTypes.map(type => (
-            <View 
-              key={type.id}
-              className={`type-item ${selectedType === type.id ? 'selected' : ''}`}
-              onClick={() => setSelectedType(type.id)}
-            >
-              <Text className="type-icon">{type.icon}</Text>
-              <Text className="type-name">{type.name}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-
-      {/* 3. 城市选择和定位板块 */}
-      <View className="location-section">
-        <Text className="section-title">目的地</Text>
-        <View className="location-controls">
-          <View className="city-picker">
-            <Picker 
-              mode="selector" 
-              range={cities}
-              onChange={handleCityChange}
-            >
-              <View className="picker-content">
-                <Text className="city-name">{location.city}</Text>
-                <Text className="picker-arrow">▼</Text>
-              </View>
-            </Picker>
-          </View>
-          
-          <View className="gps-button" onClick={getCurrentLocation}>
-            <Text className="gps-icon">📍</Text>
-            <Text className="gps-text">定位</Text>
-          </View>
-        </View>
-        <Text className="location-address">{location.address}</Text>
-      </View>
-
-      {/* 4. 日期选择板块 */}
-      <View className="date-section">
-        <Text className="section-title">入住时间</Text>
-        <View className="date-controls">
-          <View className="date-input">
-            <Text className="date-label">入住</Text>
-            <Picker 
-              mode="date" 
-              value={checkInDate}
-              onChange={handleCheckInDateChange}
-            >
-              <Text className="date-value">{checkInDate}</Text>
-            </Picker>
-          </View>
-          
-          <View className="date-input">
-            <Text className="date-label">离店</Text>
-            <Picker 
-              mode="date" 
-              value={checkOutDate}
-              onChange={handleCheckOutDateChange}
-            >
-              <Text className="date-value">{checkOutDate}</Text>
-            </Picker>
-          </View>
-          
-          <View className="nights-display">
-            <Text className="nights-label">住</Text>
-            <Text className="nights-count">{nights}</Text>
-            <Text className="nights-label">晚</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* 5. 价格和星级筛选板块 */}
-      <View className="filter-section">
-        <Text className="section-title">筛选条件</Text>
-        
-        <View className="price-filter">
-          <Text className="filter-label">价格区间: ¥{priceRange[0]} - ¥{priceRange[1]}</Text>
-          {/* 这里应该使用Slider组件，但Taro的Slider在微信小程序中表现不一致 */}
-          <View className="price-range-display">
-            <View className="range-track">
-              <View 
-                className="range-fill" 
-                style={{ width: `${((priceRange[1] - 100) / 900) * 100}%` }}
-              />
-            </View>
-            <Text className="range-min">¥100</Text>
-            <Text className="range-max">¥1000</Text>
-          </View>
-        </View>
-        
-        <View className="star-filter">
-          <Text className="filter-label">酒店星级</Text>
-          <View className="star-buttons">
-            {[1, 2, 3, 4, 5].map(star => (
-              <View
-                key={star}
-                className={`star-button ${starRating >= star ? 'active' : ''}`}
-                onClick={() => handleStarRatingChange(star)}
-              >
-                <Text className="star-icon">⭐</Text>
-                <Text className="star-text">{star}星{star === 5 ? '+' : ''}</Text>
-              </View>
+            {adImages.map((img, index) => (
+              <SwiperItem key={index}>
+                <Image className="ad-image" src={img} mode="aspectFill" />
+              </SwiperItem>
             ))}
+          </Swiper>
+        </View>
+
+        {/* 查询板块：白底、不铺满、紧凑表格式、栏间距为 0 */}
+        <View className="query-panel">
+          <View className="query-row accommodation-section">
+            <View className="domestic-foreign">
+              <View className={`tab ${isDomestic ? 'active' : ''}`} onClick={() => setIsDomestic(true)}>
+                <Text>国内</Text>
+              </View>
+              <View className={`tab ${!isDomestic ? 'active' : ''}`} onClick={() => setIsDomestic(false)}>
+                <Text>国外</Text>
+              </View>
+            </View>
+            <View className="type-grid">
+              {accommodationTypes.map(type => (
+                <View
+                  key={type.id}
+                  className={`type-item ${selectedType === type.id ? 'selected' : ''}`}
+                  onClick={() => setSelectedType(type.id)}
+                >
+                  <Text className="type-name">{type.name}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          <View className="query-row location-section">
+            <View className="city-picker">
+              <Picker mode="selector" range={cities} onChange={handleCityChange}>
+                <View className="picker-content">
+                  <Text className="city-name">{location.city}</Text>
+                  <Text className="picker-arrow">▼</Text>
+                </View>
+              </Picker>
+            </View>
+            <View className="gps-button" onClick={getCurrentLocation}>
+              <Text className="gps-icon">📍</Text>
+              <Text className="gps-text">定位</Text>
+            </View>
+          </View>
+
+          <View className="query-row date-section">
+            <View className="hourly-tabs">
+              <View className={`hourly-tab ${!isHourlyRoom ? 'active' : ''}`} onClick={() => setIsHourlyRoom(false)}>
+                <Text>住宿</Text>
+              </View>
+              <View className={`hourly-tab ${isHourlyRoom ? 'active' : ''}`} onClick={() => setIsHourlyRoom(true)}>
+                <Text>钟点房</Text>
+              </View>
+            </View>
+            {isHourlyRoom ? (
+              <View className="date-single">
+                <Picker mode="date" value={checkInDate} onChange={handleCheckInDateChange}>
+                  <Text className="date-value">{checkInDate}</Text>
+                </Picker>
+              </View>
+            ) : (
+              <View className="date-controls">
+                <View className="date-input">
+                  <Picker mode="date" value={checkInDate} onChange={handleCheckInDateChange}>
+                    <Text className="date-value">{checkInDate}</Text>
+                  </Picker>
+                </View>
+                <View className="date-input">
+                  <Picker mode="date" value={checkOutDate} onChange={handleCheckOutDateChange}>
+                    <Text className="date-value">{checkOutDate}</Text>
+                  </Picker>
+                </View>
+                <View className="nights-display">
+                  <Text className="nights-count">{nights}</Text>
+                  <Text className="nights-label">晚</Text>
+                </View>
+              </View>
+            )}
+          </View>
+
+          <View className="query-row guests-price-row">
+            <View className="guests-block">
+              <View className="guest-item">
+                <Text className="guest-label">房间</Text>
+                <Picker mode="selector" range={['1间', '2间', '3间', '4间', '5间']} value={roomCount - 1} onChange={e => setRoomCount(Number(e.detail.value) + 1)}>
+                  <Text className="guest-value">{roomCount}间</Text>
+                </Picker>
+              </View>
+              <View className="guest-item">
+                <Text className="guest-label">成人</Text>
+                <Picker mode="selector" range={['1人', '2人', '3人', '4人', '5人', '6人', '7人', '8人', '9人', '10人']} value={adultCount - 1} onChange={e => setAdultCount(Number(e.detail.value) + 1)}>
+                  <Text className="guest-value">{adultCount}人</Text>
+                </Picker>
+              </View>
+              <View className="guest-item">
+                <Text className="guest-label">儿童</Text>
+                <Picker mode="selector" range={['0人', '1人', '2人', '3人', '4人', '5人']} value={childCount} onChange={e => setChildCount(Number(e.detail.value))}>
+                  <Text className="guest-value">{childCount}人</Text>
+                </Picker>
+              </View>
+            </View>
+            <View className="price-star-trigger" onClick={() => setShowPriceStarModal(true)}>
+              <Text className="price-star-placeholder">价格/星级</Text>
+            </View>
+          </View>
+
+          <View className="query-row recommendation-section">
+            <ScrollView className="recommendation-scroll" scrollX>
+              <View className="recommendation-scroll-inner">
+                {locationRecommendations.map(loc => (
+                  <View key={loc.id} className="recommendation-chip" onClick={() => handleLocationClick(loc.id)}>
+                    <Text className="rec-name">{loc.name}</Text>
+                  </View>
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+
+          <View className="query-row search-button-section">
+            <Button className="search-button" onClick={handleSearch}>
+              <Text className="search-button-text">立即查询</Text>
+            </Button>
           </View>
         </View>
-      </View>
 
-      {/* 6. 地点推荐板块 */}
-      <View className="recommendation-section">
-        <Text className="section-title">附近推荐</Text>
-        <View className="recommendation-grid">
-          {locationRecommendations.map(loc => (
-            <View 
-              key={loc.id}
-              className="recommendation-item"
-              onClick={() => handleLocationClick(loc.id)}
-            >
-              <Text className="rec-name">{loc.name}</Text>
-              <Text className="rec-distance">{loc.distance}</Text>
-              <Text className="rec-type">{loc.type}</Text>
-            </View>
-          ))}
+        <View className="promotion-section" onClick={handlePromotionClick}>
+          <Text className="promotion-title">🎁 专属优惠</Text>
+          <Text className="promotion-desc">点击查看APP专属优惠，限时特惠！</Text>
+          <Text className="promotion-hint">仅限APP内查看</Text>
         </View>
-      </View>
 
-      {/* 7. 查询按钮 */}
-      <View className="search-button-section">
-        <Button className="search-button" onClick={handleSearch}>
-          <Text className="search-button-text">立即查询</Text>
-        </Button>
-      </View>
-
-      {/* 8. 优惠信息板块 */}
-      <View className="promotion-section" onClick={handlePromotionClick}>
-        <Text className="promotion-title">🎁 专属优惠</Text>
-        <Text className="promotion-desc">点击查看APP专属优惠，限时特惠！</Text>
-        <Text className="promotion-hint">仅限APP内查看</Text>
-      </View>
-
-      {/* 9. 分类导航板块 */}
-      <View className="category-section">
+        <View className="category-section">
         {categoryNavs.map(cat => (
-          <View 
+          <View
             key={cat.id}
             className="category-item"
             onClick={() => handleCategoryClick(cat.id)}
@@ -360,34 +375,98 @@ const IndexPage: React.FC = () => {
       <View className="hotels-section">
         <View className="section-header">
           <Text className="section-title">附近酒店</Text>
-          <Text 
+          <Text
             className="view-all"
             onClick={() => Taro.navigateTo({ url: '/pages/list/list' })}
           >
             查看全部 ›
           </Text>
         </View>
-        
+
         <View className="hotels-grid">
           {nearbyHotels.map(hotel => (
-            <View key={hotel.id} className="hotel-card">
-              <Image className="hotel-image" src={hotel.image} mode="aspectFill" />
-              <View className="hotel-info">
-                <Text className="hotel-name" numberOfLines={1}>{hotel.name}</Text>
-                <Text className="hotel-distance">距您 {Math.floor(Math.random() * 10) + 1}km</Text>
-                <Text className="hotel-location">{hotel.city}</Text>
-                <View className="hotel-price">
-                  <Text className="price-symbol">¥</Text>
-                  <Text className="price-amount">{hotel.price}</Text>
-                  <Text className="price-unit">起</Text>
-                </View>
-              </View>
-            </View>
+            <NearbyHotelCard key={hotel.id} hotel={hotel} />
           ))}
         </View>
       </View>
 
-    </ScrollView>
+      </ScrollView>
+
+      {/* 价格/星级伪弹窗：上半透明遮罩，下半为面板，点 X 或上方透明区域关闭 */}
+      {showPriceStarModal && (
+        <View className="price-star-modal-mask">
+          <View className="price-star-modal-overlay" onClick={() => setShowPriceStarModal(false)} />
+          <View className="price-star-modal-panel">
+            <View className="price-star-modal-header">
+              <Text className="price-star-modal-title">价格 / 星级</Text>
+              <View className="price-star-modal-close" onClick={() => setShowPriceStarModal(false)}>
+                <Text>✕</Text>
+              </View>
+            </View>
+            <View className="price-star-modal-body">
+              <View className="modal-price-block">
+                <Text className="modal-price-label">价格区间：¥{priceRange[0]} - ¥{priceRange[1] >= PRICE_MAX ? '500+' : priceRange[1]}</Text>
+                <View className="modal-sliders">
+                  <View className="modal-slider-row">
+                    <Text className="modal-slider-min">¥0</Text>
+                    <Slider
+                      className="modal-slider"
+                      min={0}
+                      max={PRICE_MAX}
+                      value={priceRange[0]}
+                      onChanging={handlePriceMinChange}
+                      onChange={handlePriceMinChange}
+                      blockSize={24}
+                      backgroundColor="#f0f0f0"
+                      activeColor="#1890ff"
+                    />
+                  </View>
+                  <View className="modal-slider-row">
+                    <Text className="modal-slider-min">¥{priceRange[1] >= PRICE_MAX ? '500+' : priceRange[1]}</Text>
+                    <Slider
+                      className="modal-slider"
+                      min={0}
+                      max={PRICE_MAX}
+                      value={priceRange[1]}
+                      onChanging={handlePriceMaxChange}
+                      onChange={handlePriceMaxChange}
+                      blockSize={24}
+                      backgroundColor="#f0f0f0"
+                      activeColor="#1890ff"
+                    />
+                  </View>
+                </View>
+                <View className="modal-quick-price">
+                  {priceQuickOptions.map((opt, i) => (
+                    <View
+                      key={i}
+                      className="modal-quick-btn"
+                      onClick={() => applyQuickPrice([opt.value[0], opt.value[1]])}
+                    >
+                      <Text>{opt.label}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+              <View className="modal-star-block">
+                <Text className="modal-star-label">星级</Text>
+                <View className="modal-star-buttons">
+                  {[2, 3, 4, 5].map(star => (
+                    <View
+                      key={star}
+                      className={`modal-star-btn ${starRating === star ? 'active' : ''}`}
+                      onClick={() => handleStarRatingChange(star)}
+                    >
+                      <Text>⭐ {star}星</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
+    </View>
   );
 };
 

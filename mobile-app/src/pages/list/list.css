@@ -59,6 +59,143 @@
   margin-left: 8rpx;
 }
 
+/* 价格弹窗 */
+.price-modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.price-modal-overlay {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.price-modal-panel {
+  height: 50vh;
+  min-height: 420rpx;
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+  box-shadow: 0 -8rpx 32rpx rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.price-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.price-modal-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.price-modal-close {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  color: #999;
+}
+
+.price-modal-body {
+  flex: 1;
+  overflow: auto;
+  padding: 24rpx 32rpx;
+}
+
+.price-modal-range {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.price-modal-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.price-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.price-slider-min {
+  font-size: 24rpx;
+  color: #666;
+  min-width: 80rpx;
+}
+
+.price-slider {
+  flex: 1;
+}
+
+.price-quick-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 24rpx;
+}
+
+.price-quick-btn {
+  padding: 16rpx 24rpx;
+  background: #f0f0f0;
+  border-radius: 12rpx;
+  font-size: 26rpx;
+  color: #333;
+}
+
+.price-quick-btn:active {
+  background: #e6f7ff;
+  color: #1890ff;
+}
+
+.price-modal-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 24rpx;
+}
+
+.price-action {
+  flex: 1;
+  text-align: center;
+  padding: 18rpx;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.price-action.cancel {
+  background: #f0f0f0;
+  color: #666;
+}
+
+.price-action.ok {
+  background: linear-gradient(135deg, #1890ff, #096dd9);
+  color: #fff;
+}
+
+.price-action-text {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
 /* 筛选按钮 */
 .filter-actions {
   display: flex;

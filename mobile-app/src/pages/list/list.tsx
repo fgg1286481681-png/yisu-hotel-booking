@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, Picker } from '@tarojs/components';
+import React, { useMemo, useState, useEffect } from 'react';
+import { View, Text, ScrollView, Picker, Slider } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import HotelCard from '../../components/HotelCard';
 import { Hotel, HotelQueryParams, getHotels } from '../../../../shared/api';
@@ -33,14 +33,31 @@ const ListPage: React.FC = () => {
   const [total, setTotal] = useState(0);
   
   // 筛选条件
+  const DEFAULT_PRICE_RANGE: [number, number] = [200, 600]; // 与首页默认保持一致（¥500+ 用 600 表示）
   const [filters, setFilters] = useState({
-    priceRange: [100, 1000] as [number, number],
+    priceRange: DEFAULT_PRICE_RANGE as [number, number],
     starRating: 0,
     sortBy: 'recommend' as 'recommend' | 'price_asc' | 'price_desc' | 'rating_desc' | 'distance_asc',
   });
+
+  const PRICE_MAX = 600;
+  const priceQuickOptions: Array<{ label: string; value: [number, number] }> = [
+    { label: '¥0-200', value: [0, 200] },
+    { label: '¥200-300', value: [200, 300] },
+    { label: '¥300-500', value: [300, 500] },
+    { label: '¥500以上', value: [500, PRICE_MAX] },
+  ];
+
+  const [showPriceModal, setShowPriceModal] = useState(false);
+  const [draftPriceRange, setDraftPriceRange] = useState<[number, number]>(filters.priceRange);
   
   // 搜索参数（从首页传递）
   const [searchParams, setSearchParams] = useState<HotelQueryParams>({});
+
+  const priceRangeText = useMemo(() => {
+    const maxText = filters.priceRange[1] >= PRICE_MAX ? '500+' : String(filters.priceRange[1]);
+    return `¥${filters.priceRange[0]} - ¥${maxText}`;
+  }, [filters.priceRange]);
 
   // 初始化 - 获取URL参数
   useEffect(() => {
@@ -48,22 +65,39 @@ const ListPage: React.FC = () => {
     if (currentPage?.options) {
       const params = currentPage.options;
       const newSearchParams: HotelQueryParams = {};
+      let initialPriceRange: [number, number] = DEFAULT_PRICE_RANGE;
       
-      if (params.city) newSearchParams.city = params.city;
+      if (params.city) {
+        // 处理从首页传过来的中文城市名（URLSearchParams 会进行编码）
+        try {
+          newSearchParams.city = decodeURIComponent(params.city);
+        } catch {
+          newSearchParams.city = params.city;
+        }
+      }
       if (params.checkIn) newSearchParams.checkIn = params.checkIn;
       if (params.checkOut) newSearchParams.checkOut = params.checkOut;
-      if (params.minPrice) newSearchParams.minPrice = Number(params.minPrice);
-      if (params.maxPrice) newSearchParams.maxPrice = Number(params.maxPrice);
+      if (params.minPrice || params.maxPrice) {
+        const min = params.minPrice ? Number(params.minPrice) : DEFAULT_PRICE_RANGE[0];
+        const max = params.maxPrice ? Number(params.maxPrice) : DEFAULT_PRICE_RANGE[1];
+        initialPriceRange = [min, max];
+      }
       if (params.sort) newSearchParams.sort = params.sort as any;
       
       setSearchParams(newSearchParams);
+      setFilters(prev => ({ ...prev, priceRange: initialPriceRange }));
+      setDraftPriceRange(initialPriceRange);
       
       // 更新页面标题
-      if (params.city) {
+      if (newSearchParams.city) {
         Taro.setNavigationBarTitle({
-          title: `${params.city}酒店列表`,
+          title: `${newSearchParams.city}酒店列表`,
         });
       }
+
+      // 直接用解析后的参数加载，避免 state 尚未落盘就请求
+      loadHotels(true, newSearchParams, { ...filters, priceRange: initialPriceRange });
+      return;
     }
     
     // 加载初始数据
@@ -71,29 +105,35 @@ const ListPage: React.FC = () => {
   }, []);
 
   // 加载酒店数据
-  const loadHotels = async (isRefresh = false) => {
+  const loadHotels = async (
+    isRefresh = false,
+    searchOverride?: HotelQueryParams,
+    filtersOverride?: typeof filters
+  ) => {
     if (loading) return;
     
     setLoading(true);
     const currentPage = isRefresh ? 1 : page;
     
     try {
+      const effectiveSearch = searchOverride || searchParams;
+      const effectiveFilters = filtersOverride || filters;
       const queryParams: HotelQueryParams = {
-        ...searchParams,
+        ...effectiveSearch,
         page: currentPage,
         limit: 10,
       };
       
       // 应用筛选条件
-      if (filters.priceRange[0] > 100) queryParams.minPrice = filters.priceRange[0];
-      if (filters.priceRange[1] < 1000) queryParams.maxPrice = filters.priceRange[1];
-      if (filters.starRating > 0) {
+      queryParams.minPrice = effectiveFilters.priceRange[0];
+      queryParams.maxPrice = effectiveFilters.priceRange[1];
+      if (effectiveFilters.starRating > 0) {
         // 注意：模拟数据中没有星级字段，实际项目中会有
       }
       
       // 应用排序
-      if (filters.sortBy !== 'recommend') {
-        queryParams.sort = filters.sortBy;
+      if (effectiveFilters.sortBy !== 'recommend') {
+        queryParams.sort = effectiveFilters.sortBy;
       }
       
       const data = await getHotels(queryParams);
@@ -137,10 +177,11 @@ const ListPage: React.FC = () => {
   // 重置筛选
   const resetFilters = () => {
     setFilters({
-      priceRange: [100, 1000],
+      priceRange: DEFAULT_PRICE_RANGE,
       starRating: 0,
       sortBy: 'recommend',
     });
+    setDraftPriceRange(DEFAULT_PRICE_RANGE);
     loadHotels(true);
   };
 
@@ -163,8 +204,19 @@ const ListPage: React.FC = () => {
     });
   };
 
-  // 价格范围显示文本
-  const priceRangeText = `¥${filters.priceRange[0]} - ¥${filters.priceRange[1]}`;
+  const handleDraftMinChange = (e: any) => {
+    const v = Number(e.detail.value);
+    setDraftPriceRange(prev => [v, prev[1] < v ? v : prev[1]]);
+  };
+  const handleDraftMaxChange = (e: any) => {
+    const v = Number(e.detail.value);
+    setDraftPriceRange(prev => [prev[0] > v ? v : prev[0], v]);
+  };
+  const applyDraftPrice = () => {
+    setFilters(prev => ({ ...prev, priceRange: draftPriceRange }));
+    setShowPriceModal(false);
+    loadHotels(true, undefined, { ...filters, priceRange: draftPriceRange });
+  };
   
   // 星级显示文本
   const starText = filters.starRating === 0 
@@ -179,7 +231,7 @@ const ListPage: React.FC = () => {
       {/* 筛选面板 */}
       <View className="filter-panel">
         <View className="filter-row">
-          <View className="filter-item">
+          <View className="filter-item" onClick={() => { setDraftPriceRange(filters.priceRange); setShowPriceModal(true); }}>
             <Text className="filter-label">价格</Text>
             <Text className="filter-value">{priceRangeText}</Text>
           </View>
@@ -218,6 +270,75 @@ const ListPage: React.FC = () => {
           </View>
         </View>
       </View>
+
+      {/* 价格筛选弹窗（双滑块） */}
+      {showPriceModal && (
+        <View className="price-modal-mask">
+          <View className="price-modal-overlay" onClick={() => setShowPriceModal(false)} />
+          <View className="price-modal-panel">
+            <View className="price-modal-header">
+              <Text className="price-modal-title">价格区间</Text>
+              <View className="price-modal-close" onClick={() => setShowPriceModal(false)}>
+                <Text>✕</Text>
+              </View>
+            </View>
+            <View className="price-modal-body">
+              <Text className="price-modal-range">
+                ¥{draftPriceRange[0]} - ¥{draftPriceRange[1] >= PRICE_MAX ? '500+' : draftPriceRange[1]}
+              </Text>
+              <View className="price-modal-sliders">
+                <View className="price-slider-row">
+                  <Text className="price-slider-min">¥0</Text>
+                  <Slider
+                    className="price-slider"
+                    min={0}
+                    max={PRICE_MAX}
+                    value={draftPriceRange[0]}
+                    onChanging={handleDraftMinChange}
+                    onChange={handleDraftMinChange}
+                    blockSize={24}
+                    backgroundColor="#f0f0f0"
+                    activeColor="#1890ff"
+                  />
+                </View>
+                <View className="price-slider-row">
+                  <Text className="price-slider-min">¥{draftPriceRange[1] >= PRICE_MAX ? '500+' : draftPriceRange[1]}</Text>
+                  <Slider
+                    className="price-slider"
+                    min={0}
+                    max={PRICE_MAX}
+                    value={draftPriceRange[1]}
+                    onChanging={handleDraftMaxChange}
+                    onChange={handleDraftMaxChange}
+                    blockSize={24}
+                    backgroundColor="#f0f0f0"
+                    activeColor="#1890ff"
+                  />
+                </View>
+              </View>
+              <View className="price-quick-row">
+                {priceQuickOptions.map(opt => (
+                  <View
+                    key={opt.label}
+                    className="price-quick-btn"
+                    onClick={() => setDraftPriceRange([opt.value[0], opt.value[1]])}
+                  >
+                    <Text>{opt.label}</Text>
+                  </View>
+                ))}
+              </View>
+              <View className="price-modal-actions">
+                <View className="price-action cancel" onClick={() => setShowPriceModal(false)}>
+                  <Text className="price-action-text">取消</Text>
+                </View>
+                <View className="price-action ok" onClick={applyDraftPrice}>
+                  <Text className="price-action-text">确定</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
 
       {/* 搜索结果信息 */}
       <View className="results-info">
