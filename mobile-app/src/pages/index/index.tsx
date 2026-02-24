@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, Image, Swiper, SwiperItem, Picker, Button, ScrollView, Slider } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { getHotels, Hotel, HotelQueryParams } from '../../../../shared/api';
+import Calendar from '../../components/Calendar';
 import './index.css';
 import NearbyHotelCard from '../../components/NearbyHotelCard';
 
@@ -78,6 +79,11 @@ const IndexPage: React.FC = () => {
   const [adultCount, setAdultCount] = useState(2);
   const [childCount, setChildCount] = useState(0);
   const [showPriceStarModal, setShowPriceStarModal] = useState(false);
+  const [selectedPriceOption, setSelectedPriceOption] = useState<number | null>(null);
+  
+  // 日历组件状态
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [calendarMode, setCalendarMode] = useState<'range' | 'single'>('range');
 
   // 国内/国外切换时使用对应城市列表
   const cities = useMemo(() => (isDomestic ? domesticCities : foreignCities), [isDomestic]);
@@ -193,6 +199,13 @@ const IndexPage: React.FC = () => {
     Taro.navigateTo({ url });
   };
 
+  // 处理搜索框点击，跳转到search页面
+  const handleSearchBoxClick = () => {
+    Taro.navigateTo({
+      url: '/pages/search/search',
+    });
+  };
+
   // 处理优惠信息点击
   const handlePromotionClick = () => {
     Taro.showModal({
@@ -205,12 +218,64 @@ const IndexPage: React.FC = () => {
   const handlePriceMinChange = (e: any) => {
     const v = Number(e.detail.value);
     setPriceRange(prev => [v, prev[1] < v ? v : prev[1]]);
+    setSelectedPriceOption(null); // 清除选中的快捷价格选项
   };
   const handlePriceMaxChange = (e: any) => {
     const v = Number(e.detail.value);
     setPriceRange(prev => [prev[0] > v ? v : prev[0], v]);
+    setSelectedPriceOption(null); // 清除选中的快捷价格选项
   };
-  const applyQuickPrice = (value: [number, number]) => setPriceRange([value[0], value[1]]);
+  const applyQuickPrice = (value: [number, number], index: number) => {
+    setPriceRange([value[0], value[1]]);
+    setSelectedPriceOption(index);
+  };
+
+  // 清除价格和星级筛选
+  const handleClearPriceStar = () => {
+    setPriceRange([200, 800]); // 重置为默认值
+    setStarRating(3); // 重置为默认值
+    setSelectedPriceOption(null); // 清除选中的快捷价格选项
+  };
+
+  // 确认价格和星级筛选
+  const handleConfirmPriceStar = () => {
+    setShowPriceStarModal(false);
+  };
+
+  // 处理日历选择
+  const handleDateSelect = (value: string | [string, string]) => {
+    if (calendarMode === 'range' && Array.isArray(value)) {
+      const [startDate, endDate] = value;
+      setCheckInDate(startDate);
+      setCheckOutDate(endDate);
+      
+      // 计算住几晚
+      const inDate = new Date(startDate);
+      const outDate = new Date(endDate);
+      const diffTime = Math.abs(outDate.getTime() - inDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      setNights(diffDays);
+    } else if (calendarMode === 'single' && typeof value === 'string') {
+      setCheckInDate(value);
+    }
+    setShowCalendar(false);
+  };
+
+  // 打开日历
+  const handleOpenCalendar = () => {
+    setCalendarMode(isHourlyRoom ? 'single' : 'range');
+    setShowCalendar(true);
+  };
+
+  // 处理广告图片点击，跳转到酒店详情页
+  const handleAdClick = (index: number) => {
+    // 三个北京酒店的ID，可以根据实际情况调整
+    const hotelIds = [1, 2, 3]; // 假设的酒店ID
+    const hotelId = hotelIds[index % hotelIds.length]; // 循环使用酒店ID
+    Taro.navigateTo({
+      url: `/pages/detail/detail?id=${hotelId}`,
+    });
+  };
 
   return (
     <View className="index-page">
@@ -225,7 +290,7 @@ const IndexPage: React.FC = () => {
             circular
           >
             {adImages.map((img, index) => (
-              <SwiperItem key={index}>
+              <SwiperItem key={index} onClick={() => handleAdClick(index)}>
                 <Image className="ad-image" src={img} mode="aspectFill" />
               </SwiperItem>
             ))}
@@ -265,6 +330,10 @@ const IndexPage: React.FC = () => {
                 </View>
               </Picker>
             </View>
+            <View className="search-box" onClick={handleSearchBoxClick}>
+              <Text className="search-icon">🔍</Text>
+              <Text className="search-placeholder">位置/品牌/酒店</Text>
+            </View>
             <View className="gps-button" onClick={getCurrentLocation}>
               <Text className="gps-icon">📍</Text>
               <Text className="gps-text">定位</Text>
@@ -281,22 +350,16 @@ const IndexPage: React.FC = () => {
               </View>
             </View>
             {isHourlyRoom ? (
-              <View className="date-single">
-                <Picker mode="date" value={checkInDate} onChange={handleCheckInDateChange}>
-                  <Text className="date-value">{checkInDate}</Text>
-                </Picker>
+              <View className="date-single" onClick={handleOpenCalendar}>
+                <Text className="date-value">{checkInDate}</Text>
               </View>
             ) : (
               <View className="date-controls">
-                <View className="date-input">
-                  <Picker mode="date" value={checkInDate} onChange={handleCheckInDateChange}>
-                    <Text className="date-value">{checkInDate}</Text>
-                  </Picker>
+                <View className="date-input" onClick={handleOpenCalendar}>
+                  <Text className="date-value">{checkInDate}</Text>
                 </View>
-                <View className="date-input">
-                  <Picker mode="date" value={checkOutDate} onChange={handleCheckOutDateChange}>
-                    <Text className="date-value">{checkOutDate}</Text>
-                  </Picker>
+                <View className="date-input" onClick={handleOpenCalendar}>
+                  <Text className="date-value">{checkOutDate}</Text>
                 </View>
                 <View className="nights-display">
                   <Text className="nights-count">{nights}</Text>
@@ -440,8 +503,8 @@ const IndexPage: React.FC = () => {
                   {priceQuickOptions.map((opt, i) => (
                     <View
                       key={i}
-                      className="modal-quick-btn"
-                      onClick={() => applyQuickPrice([opt.value[0], opt.value[1]])}
+                      className={`modal-quick-btn ${selectedPriceOption === i ? 'selected' : ''}`}
+                      onClick={() => applyQuickPrice([opt.value[0], opt.value[1]], i)}
                     >
                       <Text>{opt.label}</Text>
                     </View>
@@ -462,10 +525,27 @@ const IndexPage: React.FC = () => {
                   ))}
                 </View>
               </View>
+              <View className="modal-button-group">
+                <View className="modal-button clear-button" onClick={handleClearPriceStar}>
+                  <Text>清除</Text>
+                </View>
+                <View className="modal-button confirm-button" onClick={handleConfirmPriceStar}>
+                  <Text>确定</Text>
+                </View>
+              </View>
             </View>
           </View>
         </View>
       )}
+
+      {/* 日历组件 */}
+      <Calendar
+        mode={calendarMode}
+        value={calendarMode === 'range' ? [checkInDate, checkOutDate] : checkInDate}
+        onChange={handleDateSelect}
+        visible={showCalendar}
+        onClose={() => setShowCalendar(false)}
+      />
     </View>
   );
 };

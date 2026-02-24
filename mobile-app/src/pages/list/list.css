@@ -1014,8 +1014,21 @@
 }
 
 .distance-modal-button-text,
-.filter-modal-button-text {
+.filter-modal-button-text,
+.price-modal-button-text {
   font-size: 32rpx;
   font-weight: 700;
   color: #fff;
+}
+
+/* 价格/星级模态窗口确定按钮 */
+.price-modal-actions {
+  margin-top: 32rpx;
+}
+
+.price-modal-button {
+  background: linear-gradient(135deg, #1890ff, #096dd9);
+  text-align: center;
+  padding: 24rpx;
+  border-radius: 12rpx;
 }

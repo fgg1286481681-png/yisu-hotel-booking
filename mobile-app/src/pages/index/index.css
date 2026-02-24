@@ -109,7 +109,7 @@
 }
 
 .location-section .city-picker {
-  flex: 1;
+  flex: 0.6;
   min-width: 0;
   background: #f8f9fa;
   border-radius: 8rpx;
@@ -131,6 +131,32 @@
 .picker-arrow {
   font-size: 20rpx;
   color: #999;
+}
+
+.search-box {
+  flex: 1;
+  min-width: 0;
+  background: #f8f9fa;
+  border-radius: 8rpx;
+  padding: 12rpx 16rpx;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  cursor: pointer;
+}
+
+.search-icon {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.search-placeholder {
+  font-size: 24rpx;
+  color: #999;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .gps-button {
@@ -473,6 +499,12 @@
   color: #1890ff;
 }
 
+.modal-quick-btn.selected {
+  background: #1890ff;
+  color: #fff;
+  border: 2rpx solid #1890ff;
+}
+
 .modal-star-block {
   margin-top: 24rpx;
 }
@@ -501,6 +533,46 @@
 .modal-star-btn.active {
   background: #fff7e6;
   border-color: #faad14;
+}
+
+/* 模态窗口按钮组 */
+.modal-button-group {
+  display: flex;
+  gap: 24rpx;
+  margin-top: 40rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid #eee;
+}
+
+.modal-button {
+  flex: 1;
+  padding: 20rpx 0;
+  border-radius: 12rpx;
+  text-align: center;
+  font-size: 28rpx;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.clear-button {
+  background: #f8f9fa;
+  color: #666;
+  border: 2rpx solid #f0f0f0;
+}
+
+.clear-button:active {
+  background: #f0f0f0;
+}
+
+.confirm-button {
+  background: #1890ff;
+  color: #fff;
+  border: 2rpx solid #1890ff;
+}
+
+.confirm-button:active {
+  background: #096dd9;
+  border-color: #096dd9;
 }
 
 .star-buttons {

@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, ScrollView, Picker, Slider } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import HotelCard from '../../components/HotelCard';
+import Calendar from '../../components/Calendar';
 import { Hotel, HotelQueryParams, getHotels } from '../../../../shared/api';
 import './list.css';
 
@@ -33,10 +34,10 @@ const ListPage: React.FC = () => {
   const [total, setTotal] = useState(0);
   
   // 筛选条件
-  const DEFAULT_PRICE_RANGE: [number, number] = [200, 600]; // 与首页默认保持一致（¥500+ 用 600 表示）
+  const DEFAULT_PRICE_RANGE: [number, number] = [0, 1000]; // 扩大默认价格范围以显示更多酒店
   const [filters, setFilters] = useState({
     priceRange: DEFAULT_PRICE_RANGE as [number, number],
-    starRating: 0,
+    starRating: [3] as number[], // 默认3星，改为数组支持多选
     sortBy: 'recommend' as 'recommend' | 'price_asc' | 'price_desc' | 'rating_desc' | 'distance_asc' | 'star_high',
   });
 
@@ -50,7 +51,7 @@ const ListPage: React.FC = () => {
 
   const [showPriceModal, setShowPriceModal] = useState(false);
   const [draftPriceRange, setDraftPriceRange] = useState<[number, number]>(filters.priceRange);
-  const [draftStarRating, setDraftStarRating] = useState(filters.starRating);
+  const [draftStarRating, setDraftStarRating] = useState<number[]>(filters.starRating);
   
   // 导航栏和伪窗口状态
   const [showNavModal, setShowNavModal] = useState(false);
@@ -72,6 +73,9 @@ const ListPage: React.FC = () => {
   const [showSortModal, setShowSortModal] = useState(false);
   const [showDistanceModal, setShowDistanceModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  
+  // 日历组件状态
+  const [showCalendar, setShowCalendar] = useState(false);
   
   // 排序选项 - 对应api.ts中的排序参数
   const sortModalOptions = [
@@ -180,8 +184,9 @@ const ListPage: React.FC = () => {
       // 应用筛选条件
       queryParams.minPrice = effectiveFilters.priceRange[0];
       queryParams.maxPrice = effectiveFilters.priceRange[1];
-      if (effectiveFilters.starRating > 0) {
-        // 注意：模拟数据中没有星级字段，实际项目中会有
+      if (effectiveFilters.starRating.length > 0) {
+        // 注意：模拟数据中没有星级字段，实际项目中会有多星级筛选逻辑
+        // 实际项目中可能通过多个参数传递多个星级，如starRating=3&starRating=4&starRating=5
       }
       
       // 应用排序
@@ -231,12 +236,12 @@ const ListPage: React.FC = () => {
   const resetFilters = () => {
     setFilters({
       priceRange: DEFAULT_PRICE_RANGE,
-      starRating: 0,
+      starRating: [3], // 重置为3星数组，与默认值保持一致
       sortBy: 'recommend',
     });
     setSelectedSort('recommend');
     setDraftPriceRange(DEFAULT_PRICE_RANGE);
-    setDraftStarRating(0);
+    setDraftStarRating([3]); // 重置为3星数组，与默认值保持一致
     loadHotels(true);
   };
 
@@ -345,6 +350,23 @@ const ListPage: React.FC = () => {
     setChildCount(Number(e.detail.value));
   };
 
+  // 处理日历选择
+  const handleDateSelect = (value: string | [string, string]) => {
+    if (Array.isArray(value)) {
+      const [startDate, endDate] = value;
+      setCheckInDate(startDate);
+      setCheckOutDate(endDate);
+      
+      // 计算住几晚
+      const inDate = new Date(startDate);
+      const outDate = new Date(endDate);
+      const diffTime = Math.abs(outDate.getTime() - inDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      setNights(diffDays);
+    }
+    setShowCalendar(false);
+  };
+
   // 应用导航栏修改
   const applyNavChanges = () => {
     setShowNavModal(false);
@@ -353,9 +375,17 @@ const ListPage: React.FC = () => {
   };
   
   // 星级显示文本
-  const starText = filters.starRating === 0 
-    ? '不限' 
-    : starOptions.find(opt => opt.value === filters.starRating)?.label || '不限';
+  const starText = useMemo(() => {
+    if (filters.starRating.length === 0) {
+      return '不限';
+    }
+    if (filters.starRating.length === 1) {
+      const star = filters.starRating[0];
+      return starOptions.find(opt => opt.value === star)?.label || '不限';
+    }
+    // 多星级显示为"多选"
+    return '多选';
+  }, [filters.starRating]);
   
   // 排序显示文本
   const sortText = sortOptions.find(opt => opt.value === filters.sortBy)?.label || '推荐排序';
@@ -477,17 +507,34 @@ const ListPage: React.FC = () => {
                 </View>
               </View>
               <View className="modal-star-block">
-                <Text className="modal-star-label">星级</Text>
+                <Text className="modal-star-label">星级（可多选）</Text>
                 <View className="modal-star-buttons">
                   {[2, 3, 4, 5].map(star => (
                     <View
                       key={star}
-                      className={`modal-star-btn ${draftStarRating === star ? 'active' : ''}`}
-                      onClick={() => setDraftStarRating(star)}
+                      className={`modal-star-btn ${draftStarRating.includes(star) ? 'active' : ''}`}
+                      onClick={() => {
+                        setDraftStarRating(prev => {
+                          if (prev.includes(star)) {
+                            // 如果已经选中，则移除
+                            return prev.filter(s => s !== star);
+                          } else {
+                            // 如果未选中，则添加
+                            return [...prev, star];
+                          }
+                        });
+                      }}
                     >
                       <Text>⭐ {star}星</Text>
                     </View>
                   ))}
+                </View>
+              </View>
+              
+              {/* 确定按钮 */}
+              <View className="price-modal-actions">
+                <View className="price-modal-button" onClick={applyDraftPrice}>
+                  <Text className="price-modal-button-text">确定</Text>
                 </View>
               </View>
             </View>
@@ -622,7 +669,7 @@ const ListPage: React.FC = () => {
               </View>
 
               {/* 第二行：日期选择 */}
-              <View className="nav-modal-row" onClick={() => setShowDateModal(true)}>
+              <View className="nav-modal-row" onClick={() => setShowCalendar(true)}>
                 <View className="nav-modal-row-left">
                   <Text className="nav-modal-row-label">日期</Text>
                   <View className="nav-modal-dates">
@@ -695,39 +742,7 @@ const ListPage: React.FC = () => {
         </View>
       )}
 
-      {/* 日期选择模态窗口 */}
-      {showDateModal && (
-        <View className="date-modal-mask">
-          <View className="date-modal-overlay" onClick={() => setShowDateModal(false)} />
-          <View className="date-modal-panel">
-            <View className="date-modal-header">
-              <Text className="date-modal-title">选择日期</Text>
-              <View className="date-modal-close" onClick={() => setShowDateModal(false)}>
-                <Text>✕</Text>
-              </View>
-            </View>
-            <View className="date-modal-body">
-              <View className="date-picker-row">
-                <Text className="date-picker-label">入住日期</Text>
-                <Picker mode="date" value={checkInDate} onChange={handleCheckInDateChange}>
-                  <Text className="date-picker-value">{checkInDate}</Text>
-                </Picker>
-              </View>
-              <View className="date-picker-row">
-                <Text className="date-picker-label">离店日期</Text>
-                <Picker mode="date" value={checkOutDate} onChange={handleCheckOutDateChange}>
-                  <Text className="date-picker-value">{checkOutDate}</Text>
-                </Picker>
-              </View>
-              <View className="date-modal-actions">
-                <View className="date-modal-button" onClick={() => setShowDateModal(false)}>
-                  <Text className="date-modal-button-text">确定</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-        </View>
-      )}
+
 
       {/* 房间人数选择模态窗口 */}
       {showRoomModal && (
@@ -855,6 +870,15 @@ const ListPage: React.FC = () => {
           <Text className="back-to-top-text">↑</Text>
         </View>
       )}
+
+      {/* 日历组件 */}
+      <Calendar
+        mode="range"
+        value={[checkInDate, checkOutDate]}
+        onChange={handleDateSelect}
+        visible={showCalendar}
+        onClose={() => setShowCalendar(false)}
+      />
     </View>
   );
 };

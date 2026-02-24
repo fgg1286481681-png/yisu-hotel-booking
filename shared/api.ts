@@ -280,7 +280,7 @@ export const getHotels = async (params: HotelQueryParams = {}): Promise<Hotel[]>
   // 根据城市筛选
   if (params.city) {
     filteredHotels = filteredHotels.filter(hotel => 
-      hotel.city.includes(params.city!) || hotel.name.includes(params.city!)
+      hotel.city === params.city
     );
   }
   
