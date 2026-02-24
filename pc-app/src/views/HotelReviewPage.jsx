@@ -172,14 +172,14 @@ export function HotelReviewPage() {
         <div className="page-wrapper">
             <Card>
                 <Space direction="vertical" size={16} style={{ width: '100%' }}>
-                    <div>
-                        <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 4 }}>
-                            酒店信息审核 / 发布 / 下线
-                        </div>
-                        <div style={{ color: '#64748b', fontSize: 13 }}>
-                            {isAdmin
-                                ? '管理员可以在此对商户提交的酒店信息进行审核，审核通过的酒店会标记为“已发布”，也可以随时下线。'
-                                : '当前为商户视角，仅可查看自身酒店的审核状态和下线情况，审核结果由平台管理员给出。'}
+                    <div className="page-header">
+                        <div>
+                            <div className="page-title">酒店信息审核 / 发布 / 下线</div>
+                            <div className="page-subtitle">
+                                {isAdmin
+                                    ? '管理员可以在此对商户提交的酒店信息进行审核，审核通过的酒店会标记为“已发布”，也可以随时下线。'
+                                    : '当前为商户视角，仅可查看自身酒店的审核状态和下线情况，审核结果由平台管理员给出。'}
+                            </div>
                         </div>
                     </div>
                     <Table

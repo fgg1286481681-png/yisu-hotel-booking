@@ -135,14 +135,14 @@ export function HotelFormPage() {
                         size={16}
                         style={{ width: '100%' }}
                     >
-                        <div>
-                            <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 4 }}>
-                                酒店信息录入 / 编辑
-                            </div>
-                            <div style={{ color: '#64748b', fontSize: 13 }}>
-                                {isMerchant
-                                    ? '以商户身份登录，可录入和维护自己名下酒店的信息，提交后由平台管理员进行审核。'
-                                    : '以管理员身份登录，可代商户维护酒店基础信息，信息保存后会重新进入待审核状态。'}
+                        <div className="page-header">
+                            <div>
+                                <div className="page-title">酒店信息录入 / 编辑</div>
+                                <div className="page-subtitle">
+                                    {isMerchant
+                                        ? '以商户身份登录，可录入和维护自己名下酒店的信息，提交后由平台管理员进行审核。'
+                                        : '以管理员身份登录，可代商户维护酒店基础信息，信息保存后会重新进入待审核状态。'}
+                                </div>
                             </div>
                         </div>
                         <Form
@@ -207,7 +207,7 @@ export function HotelFormPage() {
                 </Card>
 
                 <Card>
-                    <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>酒店列表</div>
+                    <div className="section-title">酒店列表</div>
                     <Table
                         rowKey="id"
                         loading={tableLoading}
