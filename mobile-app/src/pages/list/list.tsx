@@ -51,6 +51,24 @@ const ListPage: React.FC = () => {
   const [showPriceModal, setShowPriceModal] = useState(false);
   const [draftPriceRange, setDraftPriceRange] = useState<[number, number]>(filters.priceRange);
   
+  // 导航栏和伪窗口状态
+  const [showNavModal, setShowNavModal] = useState(false);
+  const [location, setLocation] = useState({
+    city: '北京',
+    address: '北京市朝阳区',
+  });
+  const [checkInDate, setCheckInDate] = useState('2024-01-15');
+  const [checkOutDate, setCheckOutDate] = useState('2024-01-16');
+  const [nights, setNights] = useState(1);
+  const [roomCount, setRoomCount] = useState(1);
+  const [adultCount, setAdultCount] = useState(2);
+  const [childCount, setChildCount] = useState(0);
+  
+  // 子模态窗口状态
+  const [showCityModal, setShowCityModal] = useState(false);
+  const [showDateModal, setShowDateModal] = useState(false);
+  const [showRoomModal, setShowRoomModal] = useState(false);
+  
   // 搜索参数（从首页传递）
   const [searchParams, setSearchParams] = useState<HotelQueryParams>({});
 
@@ -70,19 +88,38 @@ const ListPage: React.FC = () => {
       if (params.city) {
         // 处理从首页传过来的中文城市名（URLSearchParams 会进行编码）
         try {
-          newSearchParams.city = decodeURIComponent(params.city);
+          const city = decodeURIComponent(params.city);
+          newSearchParams.city = city;
+          // 更新导航栏状态
+          setLocation(prev => ({ ...prev, city }));
         } catch {
           newSearchParams.city = params.city;
+          setLocation(prev => ({ ...prev, city: params.city }));
         }
       }
-      if (params.checkIn) newSearchParams.checkIn = params.checkIn;
-      if (params.checkOut) newSearchParams.checkOut = params.checkOut;
+      if (params.checkIn) {
+        newSearchParams.checkIn = params.checkIn;
+        setCheckInDate(params.checkIn);
+      }
+      if (params.checkOut) {
+        newSearchParams.checkOut = params.checkOut;
+        setCheckOutDate(params.checkOut);
+      }
       if (params.minPrice || params.maxPrice) {
         const min = params.minPrice ? Number(params.minPrice) : DEFAULT_PRICE_RANGE[0];
         const max = params.maxPrice ? Number(params.maxPrice) : DEFAULT_PRICE_RANGE[1];
         initialPriceRange = [min, max];
       }
       if (params.sort) newSearchParams.sort = params.sort as any;
+      
+      // 计算住几晚
+      if (params.checkIn && params.checkOut) {
+        const inDate = new Date(params.checkIn);
+        const outDate = new Date(params.checkOut);
+        const diffTime = Math.abs(outDate.getTime() - inDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        setNights(diffDays);
+      }
       
       setSearchParams(newSearchParams);
       setFilters(prev => ({ ...prev, priceRange: initialPriceRange }));
@@ -218,6 +255,70 @@ const ListPage: React.FC = () => {
     loadHotels(true, undefined, { ...filters, priceRange: draftPriceRange });
   };
   
+  // 导航栏和伪窗口处理函数
+  // 获取当前位置
+  const getCurrentLocation = () => {
+    Taro.getLocation({
+      type: 'wgs84',
+      success: (_res) => {
+        // 这里应该调用逆地理编码API获取城市名称
+        // 暂时使用模拟数据
+        setLocation({
+          city: '北京',
+          address: '北京市朝阳区',
+        });
+      },
+      fail: (err) => {
+        console.error('获取位置失败:', err);
+        Taro.showToast({
+          title: '定位失败，请手动选择城市',
+          icon: 'none',
+        });
+      },
+    });
+  };
+
+  // 处理日期变化
+  const handleCheckInDateChange = (e: any) => {
+    setCheckInDate(e.detail.value);
+    // 计算住几晚
+    const inDate = new Date(e.detail.value);
+    const outDate = new Date(checkOutDate);
+    const diffTime = Math.abs(outDate.getTime() - inDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    setNights(diffDays);
+  };
+
+  const handleCheckOutDateChange = (e: any) => {
+    setCheckOutDate(e.detail.value);
+    // 计算住几晚
+    const inDate = new Date(checkInDate);
+    const outDate = new Date(e.detail.value);
+    const diffTime = Math.abs(outDate.getTime() - inDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    setNights(diffDays);
+  };
+
+  // 处理房间人数变化
+  const handleRoomCountChange = (e: any) => {
+    setRoomCount(Number(e.detail.value) + 1);
+  };
+
+  const handleAdultCountChange = (e: any) => {
+    setAdultCount(Number(e.detail.value) + 1);
+  };
+
+  const handleChildCountChange = (e: any) => {
+    setChildCount(Number(e.detail.value));
+  };
+
+  // 应用导航栏修改
+  const applyNavChanges = () => {
+    setShowNavModal(false);
+    // 这里可以添加更新搜索参数的逻辑
+    // 例如：重新加载酒店数据
+  };
+  
   // 星级显示文本
   const starText = filters.starRating === 0 
     ? '不限' 
@@ -228,6 +329,37 @@ const ListPage: React.FC = () => {
 
   return (
     <View className="list-page">
+      {/* 导航栏 */}
+      <View className="nav-bar">
+        <View className="nav-section nav-info" onClick={() => setShowNavModal(true)}>
+          <View className="nav-grid">
+            <View className="nav-cell">
+              <Text className="nav-cell-label">我的</Text>
+              <Text className="nav-cell-label">位置</Text>
+            </View>
+            <View className="nav-cell">
+              <Text className="nav-cell-value">{checkInDate.split('-').slice(1).join('/')}</Text>
+              <Text className="nav-cell-value">{checkOutDate.split('-').slice(1).join('/')}</Text>
+            </View>
+            <View className="nav-cell">
+              <Text className="nav-cell-value">{roomCount}间</Text>
+              <Text className="nav-cell-value">{adultCount + childCount}人</Text>
+            </View>
+          </View>
+        </View>
+        <View className="nav-section nav-search">
+          <View className="search-box">
+            <Text className="search-icon">🔍</Text>
+            <Text className="search-placeholder">位置/品牌/酒店</Text>
+          </View>
+        </View>
+        <View className="nav-section nav-map">
+          <View className="map-icon">
+            <Text>🗺️</Text>
+          </View>
+        </View>
+      </View>
+
       {/* 筛选面板 */}
       <View className="filter-panel">
         <View className="filter-row">
@@ -333,6 +465,197 @@ const ListPage: React.FC = () => {
                 </View>
                 <View className="price-action ok" onClick={applyDraftPrice}>
                   <Text className="price-action-text">确定</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* 导航栏伪窗口 */}
+      {showNavModal && (
+        <View className="nav-modal-mask">
+          <View className="nav-modal-overlay" onClick={() => setShowNavModal(false)} />
+          <View className="nav-modal-panel">
+            <View className="nav-modal-header">
+              <Text className="nav-modal-title">修改搜索条件</Text>
+              <View className="nav-modal-close" onClick={() => setShowNavModal(false)}>
+                <Text>✕</Text>
+              </View>
+            </View>
+            <View className="nav-modal-body">
+              {/* 第一行：位置选择 */}
+              <View className="nav-modal-row" onClick={() => setShowCityModal(true)}>
+                <View className="nav-modal-row-left">
+                  <Text className="nav-modal-row-label">位置</Text>
+                  <Text className="nav-modal-row-value">{location.city}</Text>
+                </View>
+                <View className="nav-modal-row-right">
+                  <View className="nav-modal-icon" onClick={(e) => { e.stopPropagation(); getCurrentLocation(); }}>
+                    <Text>📍</Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* 第二行：日期选择 */}
+              <View className="nav-modal-row" onClick={() => setShowDateModal(true)}>
+                <View className="nav-modal-row-left">
+                  <Text className="nav-modal-row-label">日期</Text>
+                  <View className="nav-modal-dates">
+                    <Text className="nav-modal-date">{checkInDate}</Text>
+                    <Text className="nav-modal-date-separator">-</Text>
+                    <Text className="nav-modal-date">{checkOutDate}</Text>
+                  </View>
+                </View>
+                <View className="nav-modal-row-right">
+                  <Text className="nav-modal-nights">{nights}晚</Text>
+                </View>
+              </View>
+
+              {/* 第三行：房间人数 */}
+              <View className="nav-modal-row" onClick={() => setShowRoomModal(true)}>
+                <View className="nav-modal-row-left">
+                  <Text className="nav-modal-row-label">房间/人数</Text>
+                  <Text className="nav-modal-row-value">{roomCount}间，{adultCount + childCount}人</Text>
+                </View>
+                <View className="nav-modal-row-right">
+                  <Text>›</Text>
+                </View>
+              </View>
+
+              {/* 第四行：确定按钮 */}
+              <View className="nav-modal-actions">
+                <View className="nav-modal-button" onClick={applyNavChanges}>
+                  <Text className="nav-modal-button-text">确定</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* 城市选择模态窗口 */}
+      {showCityModal && (
+        <View className="city-modal-mask">
+          <View className="city-modal-overlay" onClick={() => setShowCityModal(false)} />
+          <View className="city-modal-panel">
+            <View className="city-modal-header">
+              <Text className="city-modal-title">选择城市</Text>
+              <View className="city-modal-close" onClick={() => setShowCityModal(false)}>
+                <Text>✕</Text>
+              </View>
+            </View>
+            <View className="city-modal-body">
+              <View className="city-search">
+                <Text>搜索城市...</Text>
+              </View>
+              <View className="city-list">
+                <View className="city-item" onClick={() => { setLocation({...location, city: '北京'}); setShowCityModal(false); }}>
+                  <Text>北京</Text>
+                </View>
+                <View className="city-item" onClick={() => { setLocation({...location, city: '上海'}); setShowCityModal(false); }}>
+                  <Text>上海</Text>
+                </View>
+                <View className="city-item" onClick={() => { setLocation({...location, city: '广州'}); setShowCityModal(false); }}>
+                  <Text>广州</Text>
+                </View>
+                <View className="city-item" onClick={() => { setLocation({...location, city: '深圳'}); setShowCityModal(false); }}>
+                  <Text>深圳</Text>
+                </View>
+                <View className="city-item" onClick={() => { setLocation({...location, city: '杭州'}); setShowCityModal(false); }}>
+                  <Text>杭州</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* 日期选择模态窗口 */}
+      {showDateModal && (
+        <View className="date-modal-mask">
+          <View className="date-modal-overlay" onClick={() => setShowDateModal(false)} />
+          <View className="date-modal-panel">
+            <View className="date-modal-header">
+              <Text className="date-modal-title">选择日期</Text>
+              <View className="date-modal-close" onClick={() => setShowDateModal(false)}>
+                <Text>✕</Text>
+              </View>
+            </View>
+            <View className="date-modal-body">
+              <View className="date-picker-row">
+                <Text className="date-picker-label">入住日期</Text>
+                <Picker mode="date" value={checkInDate} onChange={handleCheckInDateChange}>
+                  <Text className="date-picker-value">{checkInDate}</Text>
+                </Picker>
+              </View>
+              <View className="date-picker-row">
+                <Text className="date-picker-label">离店日期</Text>
+                <Picker mode="date" value={checkOutDate} onChange={handleCheckOutDateChange}>
+                  <Text className="date-picker-value">{checkOutDate}</Text>
+                </Picker>
+              </View>
+              <View className="date-modal-actions">
+                <View className="date-modal-button" onClick={() => setShowDateModal(false)}>
+                  <Text className="date-modal-button-text">确定</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* 房间人数选择模态窗口 */}
+      {showRoomModal && (
+        <View className="room-modal-mask">
+          <View className="room-modal-overlay" onClick={() => setShowRoomModal(false)} />
+          <View className="room-modal-panel">
+            <View className="room-modal-header">
+              <Text className="room-modal-title">房间和人数</Text>
+              <View className="room-modal-close" onClick={() => setShowRoomModal(false)}>
+                <Text>✕</Text>
+              </View>
+            </View>
+            <View className="room-modal-body">
+              <View className="room-control-row">
+                <Text className="room-control-label">房间</Text>
+                <View className="room-control-buttons">
+                  <View className="room-control-button" onClick={() => setRoomCount(Math.max(1, roomCount - 1))}>
+                    <Text>-</Text>
+                  </View>
+                  <Text className="room-control-value">{roomCount}间</Text>
+                  <View className="room-control-button" onClick={() => setRoomCount(roomCount + 1)}>
+                    <Text>+</Text>
+                  </View>
+                </View>
+              </View>
+              <View className="room-control-row">
+                <Text className="room-control-label">成人</Text>
+                <View className="room-control-buttons">
+                  <View className="room-control-button" onClick={() => setAdultCount(Math.max(1, adultCount - 1))}>
+                    <Text>-</Text>
+                  </View>
+                  <Text className="room-control-value">{adultCount}人</Text>
+                  <View className="room-control-button" onClick={() => setAdultCount(adultCount + 1)}>
+                    <Text>+</Text>
+                  </View>
+                </View>
+              </View>
+              <View className="room-control-row">
+                <Text className="room-control-label">儿童</Text>
+                <View className="room-control-buttons">
+                  <View className="room-control-button" onClick={() => setChildCount(Math.max(0, childCount - 1))}>
+                    <Text>-</Text>
+                  </View>
+                  <Text className="room-control-value">{childCount}人</Text>
+                  <View className="room-control-button" onClick={() => setChildCount(childCount + 1)}>
+                    <Text>+</Text>
+                  </View>
+                </View>
+              </View>
+              <View className="room-modal-actions">
+                <View className="room-modal-button" onClick={() => setShowRoomModal(false)}>
+                  <Text className="room-modal-button-text">确定</Text>
                 </View>
               </View>
             </View>

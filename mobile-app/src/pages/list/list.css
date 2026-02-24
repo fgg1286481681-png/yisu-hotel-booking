@@ -402,3 +402,444 @@
     height: calc(100vh - 500rpx);
   }
 }
+
+/* 导航栏样式 */
+.nav-bar {
+  background: #fff;
+  display: flex;
+  border-radius: 0 0 24rpx 24rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  margin-bottom: 24rpx;
+  overflow: hidden;
+}
+
+.nav-section {
+  padding: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1rpx solid #f0f0f0;
+}
+
+.nav-section:last-child {
+  border-right: none;
+}
+
+.nav-info {
+  flex: 2;
+}
+
+.nav-search {
+  flex: 3;
+}
+
+.nav-map {
+  flex: 1;
+}
+
+.nav-grid {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.nav-cell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 8rpx;
+}
+
+.nav-cell-label {
+  font-size: 20rpx;
+  color: #666;
+  line-height: 1.2;
+  margin-bottom: 4rpx;
+}
+
+.nav-cell-value {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.2;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  padding: 12rpx 16rpx;
+}
+
+.search-icon {
+  font-size: 24rpx;
+  color: #999;
+  margin-right: 8rpx;
+}
+
+.search-placeholder {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.map-icon {
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+}
+
+/* 导航栏伪窗口样式 */
+.nav-modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-modal-overlay {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.nav-modal-panel {
+  height: 0;
+  background: #fff;
+  border-radius: 0 0 24rpx 24rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideDown 0.3s ease-out forwards;
+}
+
+@keyframes slideDown {
+  from {
+    height: 0;
+    min-height: 0;
+  }
+  to {
+    height: 33vh;
+    min-height: 400rpx;
+  }
+}
+
+.nav-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.nav-modal-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.nav-modal-close {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  color: #999;
+}
+
+.nav-modal-body {
+  flex: 1;
+  overflow: auto;
+  padding: 24rpx 32rpx;
+}
+
+.nav-modal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.nav-modal-row:last-child {
+  border-bottom: none;
+}
+
+.nav-modal-row-left {
+  flex: 1;
+}
+
+.nav-modal-row-label {
+  font-size: 24rpx;
+  color: #666;
+  margin-bottom: 8rpx;
+  display: block;
+}
+
+.nav-modal-row-value {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  display: block;
+}
+
+.nav-modal-dates {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.nav-modal-date {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.nav-modal-date-separator {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.nav-modal-nights {
+  font-size: 24rpx;
+  color: #1890ff;
+  background: #e6f7ff;
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+}
+
+.nav-modal-row-right {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.nav-modal-icon {
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+  border-radius: 50%;
+  font-size: 24rpx;
+}
+
+.nav-modal-actions {
+  margin-top: 32rpx;
+}
+
+.nav-modal-button {
+  background: linear-gradient(135deg, #1890ff, #096dd9);
+  text-align: center;
+  padding: 24rpx;
+  border-radius: 12rpx;
+}
+
+.nav-modal-button-text {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* 城市选择模态窗口样式 */
+.city-modal-mask,
+.date-modal-mask,
+.room-modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+}
+
+.city-modal-overlay,
+.date-modal-overlay,
+.room-modal-overlay {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.city-modal-panel,
+.date-modal-panel,
+.room-modal-panel {
+  height: 60vh;
+  min-height: 500rpx;
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+  box-shadow: 0 -8rpx 32rpx rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.city-modal-header,
+.date-modal-header,
+.room-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.city-modal-title,
+.date-modal-title,
+.room-modal-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.city-modal-close,
+.date-modal-close,
+.room-modal-close {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  color: #999;
+}
+
+.city-modal-body,
+.date-modal-body,
+.room-modal-body {
+  flex: 1;
+  overflow: auto;
+  padding: 24rpx 32rpx;
+}
+
+.city-search {
+  padding: 16rpx;
+  background: #f0f0f0;
+  border-radius: 12rpx;
+  margin-bottom: 24rpx;
+  font-size: 28rpx;
+  color: #666;
+}
+
+.city-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.city-item {
+  padding: 24rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  color: #333;
+}
+
+.city-item:active {
+  background: #e6f7ff;
+}
+
+.date-picker-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.date-picker-row:last-child {
+  border-bottom: none;
+}
+
+.date-picker-label {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 600;
+}
+
+.date-picker-value {
+  font-size: 28rpx;
+  color: #1890ff;
+  font-weight: 600;
+}
+
+.date-modal-actions,
+.room-modal-actions {
+  margin-top: 32rpx;
+}
+
+.date-modal-button,
+.room-modal-button {
+  background: linear-gradient(135deg, #1890ff, #096dd9);
+  text-align: center;
+  padding: 24rpx;
+  border-radius: 12rpx;
+}
+
+.date-modal-button-text,
+.room-modal-button-text {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #fff;
+}
+
+.room-control-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.room-control-row:last-child {
+  border-bottom: none;
+}
+
+.room-control-label {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 600;
+}
+
+.room-control-buttons {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.room-control-button {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+  border-radius: 50%;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.room-control-button:active {
+  background: #e0e0e0;
+}
+
+.room-control-value {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  min-width: 80rpx;
+  text-align: center;
+}
