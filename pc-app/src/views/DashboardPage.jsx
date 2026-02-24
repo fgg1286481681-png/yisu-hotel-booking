@@ -1,11 +1,14 @@
-import React from 'react';
-import { Card, Typography, Descriptions } from 'antd';
+import React, { useMemo } from 'react';
+import { Card, Typography, Descriptions, Button, Space } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../modules/auth/AuthContext';
 
 const { Title, Paragraph } = Typography;
 
 export function DashboardPage() {
     const { user } = useAuth();
+    const navigate = useNavigate();
+    const isAdmin = useMemo(() => user?.role === 'admin', [user]);
 
     return (
         <div className="page-wrapper">
@@ -21,6 +24,24 @@ export function DashboardPage() {
                         {user?.displayName || '-'}
                     </Descriptions.Item>
                 </Descriptions>
+                <div style={{ marginTop: 24 }}>
+                    <Title level={4} style={{ marginBottom: 12 }}>
+                        快速入口
+                    </Title>
+                    <Space wrap>
+                        <Button
+                            type="primary"
+                            onClick={() => navigate('/hotels/form')}
+                        >
+                            {isAdmin ? '酒店基础信息维护' : '酒店信息录入 / 编辑'}
+                        </Button>
+                        {isAdmin && (
+                            <Button onClick={() => navigate('/hotels/review')}>
+                                酒店信息审核 / 发布 / 下线
+                            </Button>
+                        )}
+                    </Space>
+                </div>
             </Card>
         </div>
     );
