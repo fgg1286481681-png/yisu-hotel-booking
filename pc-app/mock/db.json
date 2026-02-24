@@ -32,5 +32,24 @@
       "displayName": "ranhao",
       "merchantName": "张浩然酒店"
     }
+  ],
+  "hotels": [
+    {
+      "id": 1,
+      "name": "国际酒店",
+      "city": "北京",
+      "address": "A省B县C路",
+      "phone": "",
+      "starLevel": "舒适型 / 3 星",
+      "roomType": "大床房",
+      "price": 341,
+      "openingDate": "2025-10-07",
+      "nearbyHighlights": "",
+      "promotionInfo": "",
+      "merchantId": 3,
+      "status": "offline",
+      "rejectReason": "",
+      "updatedAt": 1771946896900
+    }
   ]
 }

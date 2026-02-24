@@ -134,14 +134,23 @@ app.get('/api/auth/me', (req, res) => {
 });
 
 // ---------- Hotel information APIs ----------
-// Data shape (示例):
+// Data shape (示例，尽量和原型文档中的“必选 / 可选维度”对齐):
 // {
 //   id: 1,
-//   name: 'XX 酒店',
+//   // 酒店基础信息（必选）
+//   name: '易宿国际酒店（上海虹桥店）', // 中文名称
 //   city: '上海',
 //   address: '浦东新区 XX 路 100 号',
+//   starLevel: '五星/豪华型',          // 酒店星级
+//   roomType: '大床房, 双床房, 家庭房', // 主要房型描述
+//   price: 520,                        // 基础价格（整数即可）
+//   openingDate: '2020-05-01',         // 开业时间（YYYY-MM-DD）
 //   phone: '021-00000000',
-//   merchantId: 2, // 归属商户
+//   // 可选维度
+//   nearbyHighlights: '距离虹桥火车站 800 米，周边商务区及购物中心丰富',
+//   promotionInfo: '国庆连住 3 晚 8 折；机酒套餐立减 200 元',
+//   // 归属与审核信息
+//   merchantId: 2,
 //   status: 'pending' | 'approved' | 'rejected' | 'offline',
 //   rejectReason: '',
 //   updatedAt: 1710000000000
@@ -169,6 +178,7 @@ function getUserFromToken(req) {
 }
 
 // GET /api/hotels 列表
+// 可选 query 参数：status=offline 用于“回收站”列表
 app.get('/api/hotels', (req, res) => {
     const currentUser = getUserFromToken(req);
     if (!currentUser) {
@@ -178,9 +188,16 @@ app.get('/api/hotels', (req, res) => {
     const db = readDb();
     let hotels = db.hotels || [];
 
+    const { status } = req.query || {};
+
     // 商户只看自己的酒店，管理员可查看全部
     if (currentUser.role === 'merchant') {
         hotels = hotels.filter((h) => h.merchantId === currentUser.id);
+    }
+
+    // 如果有明确的状态过滤（目前主要用于回收站：offline）
+    if (status) {
+        hotels = hotels.filter((h) => h.status === status);
     }
 
     // 按更新时间倒序
@@ -200,10 +217,23 @@ app.post('/api/hotels', (req, res) => {
     }
 
     const payload = req.body || {};
-    const { id, name, city, address, phone } = payload;
+    const {
+        id,
+        name,
+        city,
+        address,
+        phone,
+        starLevel,
+        roomType,
+        price,
+        openingDate,
+        nearbyHighlights,
+        promotionInfo
+    } = payload;
 
-    if (!name || !city || !address) {
-        return res.status(400).json({ message: '请填写完整的酒店名称、城市和详细地址' });
+    // 和原型中的“必选维度”保持一致：名称、地址、星级、房型、价格、开业时间
+    if (!name || !city || !address || !starLevel || !roomType || (price === undefined || price === null) || !openingDate) {
+        return res.status(400).json({ message: '请填写完整的酒店名称、城市、地址、星级、房型、价格及开业时间' });
     }
 
     const db = readDb();
@@ -230,6 +260,12 @@ app.post('/api/hotels', (req, res) => {
             city,
             address,
             phone: phone || existing.phone || '',
+            starLevel: starLevel || existing.starLevel || '',
+            roomType: roomType || existing.roomType || '',
+            price: price !== undefined && price !== null ? Number(price) : existing.price || 0,
+            openingDate: openingDate || existing.openingDate || '',
+            nearbyHighlights: nearbyHighlights || existing.nearbyHighlights || '',
+            promotionInfo: promotionInfo || existing.promotionInfo || '',
             // 每次编辑后状态回到待审核
             status: 'pending',
             rejectReason: '',
@@ -244,6 +280,12 @@ app.post('/api/hotels', (req, res) => {
             city,
             address,
             phone: phone || '',
+            starLevel: starLevel || '',
+            roomType: roomType || '',
+            price: price !== undefined && price !== null ? Number(price) : 0,
+            openingDate: openingDate || '',
+            nearbyHighlights: nearbyHighlights || '',
+            promotionInfo: promotionInfo || '',
             merchantId: currentUser.id,
             status: 'pending',
             rejectReason: '',
@@ -257,7 +299,7 @@ app.post('/api/hotels', (req, res) => {
     return res.json({ success: true });
 });
 
-// PATCH /api/hotels/:id/status 审核/发布/下线
+// PATCH /api/hotels/:id/status 审核/发布/下线/恢复
 app.patch('/api/hotels/:id/status', (req, res) => {
     const currentUser = getUserFromToken(req);
     if (!currentUser) {
@@ -272,7 +314,8 @@ app.patch('/api/hotels/:id/status', (req, res) => {
     const id = Number(req.params.id);
     const { status, rejectReason } = req.body || {};
 
-    if (!['approved', 'rejected', 'offline'].includes(status)) {
+    // 支持的状态包括：审核通过（approved）、不通过（rejected）、下线（offline）、从下线恢复为已发布（restore）
+    if (!['approved', 'rejected', 'offline', 'restore'].includes(status)) {
         return res.status(400).json({ message: '非法状态' });
     }
 
@@ -286,10 +329,19 @@ app.patch('/api/hotels/:id/status', (req, res) => {
 
     const existing = db.hotels[index];
 
+    let nextStatus = status;
+    // “恢复”语义：仅在当前是 offline 时允许，将状态重新设回 approved
+    if (status === 'restore') {
+        if (existing.status !== 'offline') {
+            return res.status(400).json({ message: '仅已下线酒店可以恢复' });
+        }
+        nextStatus = 'approved';
+    }
+
     db.hotels[index] = {
         ...existing,
-        status,
-        rejectReason: status === 'rejected' ? rejectReason || '' : existing.rejectReason || '',
+        status: nextStatus,
+        rejectReason: nextStatus === 'rejected' ? rejectReason || '' : existing.rejectReason || '',
         updatedAt: Date.now()
     };
 

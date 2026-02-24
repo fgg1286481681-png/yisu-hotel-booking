@@ -5,6 +5,13 @@ import { hotelApi } from '../services/hotelApi';
 
 const CITY_OPTIONS = ['北京', '上海', '广州', '深圳', '杭州', '成都', '重庆', '南京', '武汉', '西安'];
 
+const STAR_LEVEL_OPTIONS = [
+    '经济型 / 1-2 星',
+    '舒适型 / 3 星',
+    '高档型 / 4 星',
+    '豪华型 / 5 星'
+];
+
 export function HotelFormPage() {
     const { user, token } = useAuth();
     const [form] = Form.useForm();
@@ -47,7 +54,13 @@ export function HotelFormPage() {
                     name: values.name,
                     city: values.city,
                     address: values.address,
-                    phone: values.phone
+                    phone: values.phone,
+                    starLevel: values.starLevel,
+                    roomType: values.roomType,
+                    price: values.price,
+                    openingDate: values.openingDate,
+                    nearbyHighlights: values.nearbyHighlights,
+                    promotionInfo: values.promotionInfo
                 },
                 token
             );
@@ -67,7 +80,13 @@ export function HotelFormPage() {
             name: record.name,
             city: record.city,
             address: record.address,
-            phone: record.phone
+            phone: record.phone,
+            starLevel: record.starLevel,
+            roomType: record.roomType,
+            price: record.price,
+            openingDate: record.openingDate,
+            nearbyHighlights: record.nearbyHighlights,
+            promotionInfo: record.promotionInfo
         });
     };
 
@@ -95,6 +114,23 @@ export function HotelFormPage() {
             title: '城市',
             dataIndex: 'city',
             key: 'city'
+        },
+        {
+            title: '星级',
+            dataIndex: 'starLevel',
+            key: 'starLevel'
+        },
+        {
+            title: '主要房型',
+            dataIndex: 'roomType',
+            key: 'roomType',
+            ellipsis: true
+        },
+        {
+            title: '基础价格',
+            dataIndex: 'price',
+            key: 'price',
+            render: (val) => (val !== undefined && val !== null ? `¥${val}` : '-')
         },
         {
             title: '状态',
@@ -143,6 +179,10 @@ export function HotelFormPage() {
                                         ? '以商户身份登录，可录入和维护自己名下酒店的信息，提交后由平台管理员进行审核。'
                                         : '以管理员身份登录，可代商户维护酒店基础信息，信息保存后会重新进入待审核状态。'}
                                 </div>
+                                <div className="page-subtitle">
+                                    必填维度包括：酒店名称（中）、所在城市与详细地址、酒店星级、主要房型、基础价格及开业时间；
+                                    可选维度包括：酒店周边热门景点 / 交通及商圈说明、价格优惠场景等营销信息。
+                                </div>
                             </div>
                         </div>
                         <Form
@@ -152,9 +192,9 @@ export function HotelFormPage() {
                             initialValues={{ city: CITY_OPTIONS[0] }}
                         >
                             <Form.Item
-                                label="酒店名称"
+                                label="酒店名称（中文）"
                                 name="name"
-                                rules={[{ required: true, message: '请输入酒店名称' }]}
+                                rules={[{ required: true, message: '请输入酒店中文名称' }]}
                             >
                                 <Input placeholder="例如：易宿国际酒店（上海虹桥店）" />
                             </Form.Item>
@@ -181,16 +221,60 @@ export function HotelFormPage() {
                                 />
                             </Form.Item>
                             <Form.Item
-                                label="联系电话"
-                                name="phone"
-                                rules={[
-                                    {
-                                        pattern: /^(\d{3,4}-\d{7,8}|1\d{10})$/,
-                                        message: '请输入合法的座机或手机号（可选）'
-                                    }
-                                ]}
+                                label="酒店星级"
+                                name="starLevel"
+                                rules={[{ required: true, message: '请选择酒店星级' }]}
                             >
-                                <Input placeholder="例如：021-88888888 或 13800000000（选填）" />
+                                <Select
+                                    options={STAR_LEVEL_OPTIONS.map((label) => ({ label, value: label }))}
+                                    placeholder="请选择酒店星级"
+                                />
+                            </Form.Item>
+                            <Form.Item
+                                label="主要房型"
+                                name="roomType"
+                                rules={[{ required: true, message: '请输入主要房型信息' }]}
+                            >
+                                <Input.TextArea
+                                    placeholder="例如：大床房 / 双床房 / 家庭房等，可用顿号或逗号分隔"
+                                    autoSize={{ minRows: 2, maxRows: 4 }}
+                                />
+                            </Form.Item>
+                            <Form.Item
+                                label="基础价格（含税）"
+                                name="price"
+                                rules={[{ required: true, message: '请输入基础价格' }]}
+                            >
+                                <Input
+                                    type="number"
+                                    min={0}
+                                    placeholder="例如：520，单位为人民币元"
+                                />
+                            </Form.Item>
+                            <Form.Item
+                                label="酒店开业时间"
+                                name="openingDate"
+                                rules={[{ required: true, message: '请选择或输入开业时间' }]}
+                            >
+                                <Input type="date" />
+                            </Form.Item>
+                            <Form.Item
+                                label="周边热门景点 / 交通及商圈（可选）"
+                                name="nearbyHighlights"
+                            >
+                                <Input.TextArea
+                                    placeholder="例如：步行 5 分钟可达地铁站，毗邻 XX 商圈及 XX 景区"
+                                    autoSize={{ minRows: 2, maxRows: 4 }}
+                                />
+                            </Form.Item>
+                            <Form.Item
+                                label="价格优惠场景 / 套餐说明（可选）"
+                                name="promotionInfo"
+                            >
+                                <Input.TextArea
+                                    placeholder="例如：节日连住 3 晚 8 折、机酒套餐立减多少元等"
+                                    autoSize={{ minRows: 2, maxRows: 4 }}
+                                />
                             </Form.Item>
                             <Form.Item>
                                 <Space>

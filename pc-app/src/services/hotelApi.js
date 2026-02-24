@@ -3,11 +3,12 @@ import axios from 'axios';
 const BASE_URL = 'http://localhost:3001';
 
 export const hotelApi = {
-    async list(token) {
+    async list(token, params = {}) {
         const res = await axios.get(`${BASE_URL}/api/hotels`, {
             headers: {
                 Authorization: `Bearer ${token}`
-            }
+            },
+            params
         });
         return res.data;
     },

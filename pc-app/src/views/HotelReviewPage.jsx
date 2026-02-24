@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Card, Modal, Space, Table, Tag, message } from 'antd';
+import { Button, Card, Modal, Space, Table, Tag, message, Switch, Tooltip } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { useAuth } from '../modules/auth/AuthContext';
 import { hotelApi } from '../services/hotelApi';
@@ -10,15 +10,23 @@ export function HotelReviewPage() {
     const { user, token } = useAuth();
     const [loading, setLoading] = useState(false);
     const [hotels, setHotels] = useState([]);
+    const [showOffline, setShowOffline] = useState(false);
 
     const isAdmin = useMemo(() => user?.role === 'admin', [user]);
 
-    const loadHotels = async () => {
+    const loadHotels = async (options = {}) => {
+        const { forceStatus } = options;
         if (!token) return;
         setLoading(true);
         try {
-            const res = await hotelApi.list(token);
-            setHotels(res.hotels || []);
+            // 当处于“回收站视图”时，仅加载已下线酒店；否则默认不展示已下线记录
+            const listParams = forceStatus || showOffline ? { status: 'offline' } : {};
+            const res = await hotelApi.list(token, listParams);
+            const allHotels = res.hotels || [];
+            const visibleHotels = showOffline
+                ? allHotels.filter((h) => h.status === 'offline')
+                : allHotels.filter((h) => h.status !== 'offline');
+            setHotels(visibleHotels);
         } catch (e) {
             message.error('加载酒店列表失败');
         } finally {
@@ -28,7 +36,8 @@ export function HotelReviewPage() {
 
     useEffect(() => {
         loadHotels();
-    }, [token]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [token, showOffline]);
 
     const statusTag = (status) => {
         switch (status) {
@@ -76,7 +85,16 @@ export function HotelReviewPage() {
                 onOk: () => doUpdate(reasonText || '')
             });
         } else {
-            const actionText = status === 'approved' ? '通过审核并发布' : '下线';
+            let actionText = '';
+            if (status === 'approved') {
+                actionText = '通过审核并发布';
+            } else if (status === 'offline') {
+                actionText = '下线';
+            } else if (status === 'restore') {
+                actionText = '恢复为已发布';
+            } else {
+                actionText = '更新状态';
+            }
             confirm({
                 title: `确认要将该酒店${actionText}吗？`,
                 icon: <ExclamationCircleOutlined />,
@@ -97,6 +115,23 @@ export function HotelReviewPage() {
             title: '城市',
             dataIndex: 'city',
             key: 'city'
+        },
+        {
+            title: '星级',
+            dataIndex: 'starLevel',
+            key: 'starLevel'
+        },
+        {
+            title: '主要房型',
+            dataIndex: 'roomType',
+            key: 'roomType',
+            ellipsis: true
+        },
+        {
+            title: '基础价格',
+            dataIndex: 'price',
+            key: 'price',
+            render: (val) => (val !== undefined && val !== null ? `¥${val}` : '-')
         },
         {
             title: '地址',
@@ -132,13 +167,13 @@ export function HotelReviewPage() {
 
     if (isAdmin) {
         columns.push({
-            title: '审核 / 上下线',
+            title: showOffline ? '回收站操作' : '审核 / 上下线',
             key: 'action',
             fixed: 'right',
             width: 220,
             render: (_, record) => (
                 <Space>
-                    {record.status !== 'approved' && (
+                    {!showOffline && record.status !== 'approved' && (
                         <Button
                             type="link"
                             onClick={() => handleUpdateStatus(record, 'approved')}
@@ -146,7 +181,7 @@ export function HotelReviewPage() {
                             通过并发布
                         </Button>
                     )}
-                    {record.status !== 'rejected' && (
+                    {!showOffline && record.status !== 'rejected' && (
                         <Button
                             type="link"
                             danger
@@ -155,12 +190,20 @@ export function HotelReviewPage() {
                             不通过
                         </Button>
                     )}
-                    {record.status === 'approved' && (
+                    {!showOffline && record.status === 'approved' && (
                         <Button
                             type="link"
                             onClick={() => handleUpdateStatus(record, 'offline')}
                         >
                             下线
+                        </Button>
+                    )}
+                    {showOffline && record.status === 'offline' && (
+                        <Button
+                            type="link"
+                            onClick={() => handleUpdateStatus(record, 'restore')}
+                        >
+                            恢复为已发布
                         </Button>
                     )}
                 </Space>
@@ -172,7 +215,7 @@ export function HotelReviewPage() {
         <div className="page-wrapper">
             <Card>
                 <Space direction="vertical" size={16} style={{ width: '100%' }}>
-                    <div className="page-header">
+                    <div className="page-header" style={{ justifyContent: 'space-between', alignItems: 'flex-end' }}>
                         <div>
                             <div className="page-title">酒店信息审核 / 发布 / 下线</div>
                             <div className="page-subtitle">
@@ -181,6 +224,17 @@ export function HotelReviewPage() {
                                     : '当前为商户视角，仅可查看自身酒店的审核状态和下线情况，审核结果由平台管理员给出。'}
                             </div>
                         </div>
+                        {isAdmin && (
+                            <Space>
+                                <Tooltip title="开启后仅展示当前平台中已下线的酒店记录，可从中恢复已下线酒店。">
+                                    <span style={{ fontSize: 13, color: '#666' }}>查看已下线酒店（回收站）</span>
+                                </Tooltip>
+                                <Switch
+                                    checked={showOffline}
+                                    onChange={(checked) => setShowOffline(checked)}
+                                />
+                            </Space>
+                        )}
                     </div>
                     <Table
                         rowKey="id"

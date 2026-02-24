@@ -269,7 +269,7 @@ export function DashboardPage() {
                 <Card style={{ minHeight: 180 }}>
                     <div className="section-title">运营提示 / 使用建议</div>
                     <Paragraph type="secondary" style={{ marginBottom: 4 }}>
-                        当前版本主要聚焦于酒店基础信息的录入、审核与发布流程。建议先完善酒店资料，再根据平台规则提交审核。
+                        当前版本主要聚焦于酒店基础信息的录入、审核与发布流程。建议先按“酒店名称、地址、星级、房型、价格、开业时间”等必选维度完善资料，再根据平台规则提交审核。
                     </Paragraph>
                     <Paragraph type="secondary">
                         后续可在此区域展示平台公告、配置指引或运营建议，帮助商户更高效地管理房态与价格。
