@@ -63,6 +63,23 @@
   margin-left: 2rpx;
 }
 
+.hotel-stars {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-xs;
+}
+
+.stars-text {
+  font-size: $font-size-sm;
+  color: #ffd700;
+  margin-right: $spacing-xs;
+}
+
+.stars-label {
+  font-size: $font-size-sm;
+  color: $text-color-light;
+}
+
 .hotel-address {
   font-size: $font-size-sm;
   color: $text-color-light;

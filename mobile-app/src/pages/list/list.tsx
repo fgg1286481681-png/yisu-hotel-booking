@@ -37,7 +37,7 @@ const ListPage: React.FC = () => {
   const [filters, setFilters] = useState({
     priceRange: DEFAULT_PRICE_RANGE as [number, number],
     starRating: 0,
-    sortBy: 'recommend' as 'recommend' | 'price_asc' | 'price_desc' | 'rating_desc' | 'distance_asc',
+    sortBy: 'recommend' as 'recommend' | 'price_asc' | 'price_desc' | 'rating_desc' | 'distance_asc' | 'star_high',
   });
 
   const PRICE_MAX = 600;
@@ -50,6 +50,7 @@ const ListPage: React.FC = () => {
 
   const [showPriceModal, setShowPriceModal] = useState(false);
   const [draftPriceRange, setDraftPriceRange] = useState<[number, number]>(filters.priceRange);
+  const [draftStarRating, setDraftStarRating] = useState(filters.starRating);
   
   // 导航栏和伪窗口状态
   const [showNavModal, setShowNavModal] = useState(false);
@@ -68,6 +69,21 @@ const ListPage: React.FC = () => {
   const [showCityModal, setShowCityModal] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
   const [showRoomModal, setShowRoomModal] = useState(false);
+  const [showSortModal, setShowSortModal] = useState(false);
+  const [showDistanceModal, setShowDistanceModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  
+  // 排序选项 - 对应api.ts中的排序参数
+  const sortModalOptions = [
+    { id: 'smart', label: '智能排序', value: 'recommend' },
+    { id: 'price_low', label: '低价优先', value: 'price_asc' },
+    { id: 'price_high', label: '高价优先', value: 'price_desc' },
+    { id: 'rating', label: '好评优先', value: 'rating_desc' },
+    { id: 'star_high', label: '高星优先', value: 'star_high' },
+    { id: 'distance', label: '直线距离', value: 'distance_asc' },
+  ];
+  
+  const [selectedSort, setSelectedSort] = useState('recommend');
   
   // 搜索参数（从首页传递）
   const [searchParams, setSearchParams] = useState<HotelQueryParams>({});
@@ -158,7 +174,7 @@ const ListPage: React.FC = () => {
       const queryParams: HotelQueryParams = {
         ...effectiveSearch,
         page: currentPage,
-        limit: 10,
+        limit: 5,
       };
       
       // 应用筛选条件
@@ -184,7 +200,7 @@ const ListPage: React.FC = () => {
       }
       
       // 模拟是否有更多数据
-      setHasMore(data.length === 10);
+      setHasMore(data.length === 5);
       setTotal(prev => isRefresh ? data.length : prev + data.length);
       
     } catch (error) {
@@ -218,7 +234,9 @@ const ListPage: React.FC = () => {
       starRating: 0,
       sortBy: 'recommend',
     });
+    setSelectedSort('recommend');
     setDraftPriceRange(DEFAULT_PRICE_RANGE);
+    setDraftStarRating(0);
     loadHotels(true);
   };
 
@@ -241,6 +259,13 @@ const ListPage: React.FC = () => {
     });
   };
 
+  // 跳转到搜索页面
+  const handleSearchClick = () => {
+    Taro.navigateTo({
+      url: `/pages/search/search?city=${encodeURIComponent(location.city)}`,
+    });
+  };
+
   const handleDraftMinChange = (e: any) => {
     const v = Number(e.detail.value);
     setDraftPriceRange(prev => [v, prev[1] < v ? v : prev[1]]);
@@ -250,9 +275,17 @@ const ListPage: React.FC = () => {
     setDraftPriceRange(prev => [prev[0] > v ? v : prev[0], v]);
   };
   const applyDraftPrice = () => {
-    setFilters(prev => ({ ...prev, priceRange: draftPriceRange }));
+    setFilters(prev => ({ 
+      ...prev, 
+      priceRange: draftPriceRange,
+      starRating: draftStarRating 
+    }));
     setShowPriceModal(false);
-    loadHotels(true, undefined, { ...filters, priceRange: draftPriceRange });
+    loadHotels(true, undefined, { 
+      ...filters, 
+      priceRange: draftPriceRange,
+      starRating: draftStarRating 
+    });
   };
   
   // 导航栏和伪窗口处理函数
@@ -348,7 +381,7 @@ const ListPage: React.FC = () => {
           </View>
         </View>
         <View className="nav-section nav-search">
-          <View className="search-box">
+          <View className="search-box" onClick={handleSearchClick}>
             <Text className="search-icon">🔍</Text>
             <Text className="search-placeholder">位置/品牌/酒店</Text>
           </View>
@@ -363,108 +396,199 @@ const ListPage: React.FC = () => {
       {/* 筛选面板 */}
       <View className="filter-panel">
         <View className="filter-row">
-          <View className="filter-item" onClick={() => { setDraftPriceRange(filters.priceRange); setShowPriceModal(true); }}>
-            <Text className="filter-label">价格</Text>
-            <Text className="filter-value">{priceRangeText}</Text>
+          <View className="filter-item" onClick={() => setShowSortModal(true)}>
+            <Text className="filter-label">
+              {sortModalOptions.find(opt => opt.value === selectedSort)?.label || '智能排序'}▼
+            </Text>
           </View>
           
-          <View className="filter-item">
-            <Text className="filter-label">星级</Text>
-            <Picker
-              mode="selector"
-              range={starOptions.map(opt => opt.label)}
-              value={starOptions.findIndex(opt => opt.value === filters.starRating)}
-              onChange={(e) => handleFilterChange('starRating', starOptions[e.detail.value].value)}
-            >
-              <Text className="filter-value">{starText}</Text>
-            </Picker>
+          <View className="filter-item" onClick={() => setShowDistanceModal(true)}>
+            <Text className="filter-label">位置距离▼</Text>
           </View>
           
-          <View className="filter-item">
-            <Text className="filter-label">排序</Text>
-            <Picker
-              mode="selector"
-              range={sortOptions.map(opt => opt.label)}
-              value={sortOptions.findIndex(opt => opt.value === filters.sortBy)}
-              onChange={(e) => handleFilterChange('sortBy', sortOptions[e.detail.value].value)}
-            >
-              <Text className="filter-value">{sortText}</Text>
-            </Picker>
+          <View className="filter-item" onClick={() => { 
+            setDraftPriceRange(filters.priceRange); 
+            setDraftStarRating(filters.starRating);
+            setShowPriceModal(true); 
+          }}>
+            <Text className="filter-label">价格/星级▼</Text>
           </View>
-        </View>
-        
-        <View className="filter-actions">
-          <View className="filter-button reset" onClick={resetFilters}>
-            <Text className="filter-button-text">重置</Text>
-          </View>
-          <View className="filter-button apply" onClick={applyFilters}>
-            <Text className="filter-button-text">应用</Text>
+          
+          <View className="filter-item" onClick={() => setShowFilterModal(true)}>
+            <Text className="filter-label">筛选▼</Text>
           </View>
         </View>
       </View>
 
-      {/* 价格筛选弹窗（双滑块） */}
+      {/* 价格/星级筛选弹窗 */}
       {showPriceModal && (
-        <View className="price-modal-mask">
-          <View className="price-modal-overlay" onClick={() => setShowPriceModal(false)} />
-          <View className="price-modal-panel">
-            <View className="price-modal-header">
-              <Text className="price-modal-title">价格区间</Text>
-              <View className="price-modal-close" onClick={() => setShowPriceModal(false)}>
+        <View className="price-star-modal-mask">
+          <View className="price-star-modal-overlay" onClick={() => setShowPriceModal(false)} />
+          <View className="price-star-modal-panel">
+            <View className="price-star-modal-header">
+              <Text className="price-star-modal-title">价格 / 星级</Text>
+              <View className="price-star-modal-close" onClick={() => setShowPriceModal(false)}>
                 <Text>✕</Text>
               </View>
             </View>
-            <View className="price-modal-body">
-              <Text className="price-modal-range">
-                ¥{draftPriceRange[0]} - ¥{draftPriceRange[1] >= PRICE_MAX ? '500+' : draftPriceRange[1]}
-              </Text>
-              <View className="price-modal-sliders">
-                <View className="price-slider-row">
-                  <Text className="price-slider-min">¥0</Text>
-                  <Slider
-                    className="price-slider"
-                    min={0}
-                    max={PRICE_MAX}
-                    value={draftPriceRange[0]}
-                    onChanging={handleDraftMinChange}
-                    onChange={handleDraftMinChange}
-                    blockSize={24}
-                    backgroundColor="#f0f0f0"
-                    activeColor="#1890ff"
-                  />
-                </View>
-                <View className="price-slider-row">
-                  <Text className="price-slider-min">¥{draftPriceRange[1] >= PRICE_MAX ? '500+' : draftPriceRange[1]}</Text>
-                  <Slider
-                    className="price-slider"
-                    min={0}
-                    max={PRICE_MAX}
-                    value={draftPriceRange[1]}
-                    onChanging={handleDraftMaxChange}
-                    onChange={handleDraftMaxChange}
-                    blockSize={24}
-                    backgroundColor="#f0f0f0"
-                    activeColor="#1890ff"
-                  />
-                </View>
-              </View>
-              <View className="price-quick-row">
-                {priceQuickOptions.map(opt => (
-                  <View
-                    key={opt.label}
-                    className="price-quick-btn"
-                    onClick={() => setDraftPriceRange([opt.value[0], opt.value[1]])}
-                  >
-                    <Text>{opt.label}</Text>
+            <View className="price-star-modal-body">
+              <View className="modal-price-block">
+                <Text className="modal-price-label">价格区间：¥{draftPriceRange[0]} - ¥{draftPriceRange[1] >= PRICE_MAX ? '500+' : draftPriceRange[1]}</Text>
+                <View className="modal-sliders">
+                  <View className="modal-slider-row">
+                    <Text className="modal-slider-min">¥0</Text>
+                    <Slider
+                      className="modal-slider"
+                      min={0}
+                      max={PRICE_MAX}
+                      value={draftPriceRange[0]}
+                      onChanging={handleDraftMinChange}
+                      onChange={handleDraftMinChange}
+                      blockSize={24}
+                      backgroundColor="#f0f0f0"
+                      activeColor="#1890ff"
+                    />
                   </View>
-                ))}
-              </View>
-              <View className="price-modal-actions">
-                <View className="price-action cancel" onClick={() => setShowPriceModal(false)}>
-                  <Text className="price-action-text">取消</Text>
+                  <View className="modal-slider-row">
+                    <Text className="modal-slider-min">¥{draftPriceRange[1] >= PRICE_MAX ? '500+' : draftPriceRange[1]}</Text>
+                    <Slider
+                      className="modal-slider"
+                      min={0}
+                      max={PRICE_MAX}
+                      value={draftPriceRange[1]}
+                      onChanging={handleDraftMaxChange}
+                      onChange={handleDraftMaxChange}
+                      blockSize={24}
+                      backgroundColor="#f0f0f0"
+                      activeColor="#1890ff"
+                    />
+                  </View>
                 </View>
-                <View className="price-action ok" onClick={applyDraftPrice}>
-                  <Text className="price-action-text">确定</Text>
+                <View className="modal-quick-price">
+                  {priceQuickOptions.map((opt, i) => (
+                    <View
+                      key={i}
+                      className="modal-quick-btn"
+                      onClick={() => setDraftPriceRange([opt.value[0], opt.value[1]])}
+                    >
+                      <Text>{opt.label}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+              <View className="modal-star-block">
+                <Text className="modal-star-label">星级</Text>
+                <View className="modal-star-buttons">
+                  {[2, 3, 4, 5].map(star => (
+                    <View
+                      key={star}
+                      className={`modal-star-btn ${draftStarRating === star ? 'active' : ''}`}
+                      onClick={() => setDraftStarRating(star)}
+                    >
+                      <Text>⭐ {star}星</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* 智能排序模态窗口 */}
+      {showSortModal && (
+        <View className="sort-modal-mask">
+          <View className="sort-modal-overlay" onClick={() => setShowSortModal(false)} />
+          <View className="sort-modal-panel">
+            <View className="sort-modal-header">
+              <Text className="sort-modal-title">排序方式</Text>
+              <View className="sort-modal-close" onClick={() => setShowSortModal(false)}>
+                <Text>✕</Text>
+              </View>
+            </View>
+            <View className="sort-modal-body">
+              {sortModalOptions.map(option => (
+                <View 
+                  key={option.id} 
+                  className="sort-modal-row"
+                  onClick={() => {
+                    setSelectedSort(option.value);
+                    // 设置排序方式并重新加载数据
+                    setFilters(prev => {
+                      const newFilters = { ...prev, sortBy: option.value as any };
+                      // 在状态更新后立即重新加载数据
+                      setTimeout(() => {
+                        loadHotels(true, undefined, newFilters);
+                      }, 0);
+                      return newFilters;
+                    });
+                    setShowSortModal(false);
+                  }}
+                >
+                  <Text 
+                    className="sort-modal-row-label"
+                    style={{
+                      fontSize: '24rpx',
+                      color: selectedSort === option.value ? '#1890ff' : '#666'
+                    }}
+                  >
+                    {option.label}
+                  </Text>
+                  <View className="sort-modal-row-right">
+                    {selectedSort === option.value && (
+                      <Text className="sort-modal-check">✓</Text>
+                    )}
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* 位置距离模态窗口 */}
+      {showDistanceModal && (
+        <View className="distance-modal-mask">
+          <View className="distance-modal-overlay" onClick={() => setShowDistanceModal(false)} />
+          <View className="distance-modal-panel">
+            <View className="distance-modal-header">
+              <Text className="distance-modal-title">位置距离</Text>
+              <View className="distance-modal-close" onClick={() => setShowDistanceModal(false)}>
+                <Text>✕</Text>
+              </View>
+            </View>
+            <View className="distance-modal-body">
+              <Text style={{ fontSize: '28rpx', color: '#666', textAlign: 'center', padding: '80rpx 0' }}>
+                位置距离筛选功能开发中...
+              </Text>
+              <View className="distance-modal-actions">
+                <View className="distance-modal-button" onClick={() => setShowDistanceModal(false)}>
+                  <Text className="distance-modal-button-text">确定</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* 筛选模态窗口 */}
+      {showFilterModal && (
+        <View className="filter-modal-mask">
+          <View className="filter-modal-overlay" onClick={() => setShowFilterModal(false)} />
+          <View className="filter-modal-panel">
+            <View className="filter-modal-header">
+              <Text className="filter-modal-title">更多筛选</Text>
+              <View className="filter-modal-close" onClick={() => setShowFilterModal(false)}>
+                <Text>✕</Text>
+              </View>
+            </View>
+            <View className="filter-modal-body">
+              <Text style={{ fontSize: '28rpx', color: '#666', textAlign: 'center', padding: '80rpx 0' }}>
+                更多筛选功能开发中...
+              </Text>
+              <View className="filter-modal-actions">
+                <View className="filter-modal-button" onClick={() => setShowFilterModal(false)}>
+                  <Text className="filter-modal-button-text">确定</Text>
                 </View>
               </View>
             </View>

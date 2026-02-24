@@ -22,7 +22,7 @@ export interface HotelQueryParams {
   limit?: number;
   minPrice?: number;
   maxPrice?: number;
-  sort?: 'recommend' | 'price_asc' | 'price_desc' | 'rating_desc' | 'distance_asc';
+  sort?: 'recommend' | 'price_asc' | 'price_desc' | 'rating_desc' | 'distance_asc' | 'star_high';
 }
 
 // 模拟酒店数据 - 扩展更多数据
@@ -146,6 +146,127 @@ const mockHotels: Hotel[] = [
     facilities: ['免费WiFi', '游泳池', '健身房', '餐厅', '会议室'],
     starRating: 4,
     distance: 4.7
+  },
+  // 新增北京酒店
+  {
+    id: 11,
+    name: '北京国贸大酒店',
+    address: '北京市朝阳区建国门外大街',
+    price: 850,
+    rating: 4.7,
+    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop',
+    city: '北京',
+    facilities: ['免费WiFi', '游泳池', '健身房', '水疗中心', '餐厅', '会议室'],
+    starRating: 5,
+    distance: 3.2
+  },
+  {
+    id: 12,
+    name: '北京希尔顿酒店',
+    address: '北京市东城区王府井大街',
+    price: 720,
+    rating: 4.5,
+    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop',
+    city: '北京',
+    facilities: ['免费WiFi', '停车场', '健身房', '餐厅', '商务中心'],
+    starRating: 4,
+    distance: 2.8
+  },
+  {
+    id: 13,
+    name: '北京香格里拉饭店',
+    address: '北京市海淀区紫竹院路',
+    price: 680,
+    rating: 4.6,
+    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop',
+    city: '北京',
+    facilities: ['免费WiFi', '游泳池', '健身房', '水疗中心', '餐厅'],
+    starRating: 5,
+    distance: 5.1
+  },
+  {
+    id: 14,
+    name: '北京长城饭店',
+    address: '北京市朝阳区东三环北路',
+    price: 550,
+    rating: 4.3,
+    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop',
+    city: '北京',
+    facilities: ['免费WiFi', '停车场', '餐厅', '会议室'],
+    starRating: 4,
+    distance: 4.5
+  },
+  {
+    id: 15,
+    name: '北京金融街威斯汀大酒店',
+    address: '北京市西城区金融大街',
+    price: 780,
+    rating: 4.8,
+    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop',
+    city: '北京',
+    facilities: ['免费WiFi', '游泳池', '健身房', '水疗中心', '餐厅', '商务中心'],
+    starRating: 5,
+    distance: 3.7
+  },
+  {
+    id: 16,
+    name: '北京丽思卡尔顿酒店',
+    address: '北京市朝阳区建国路',
+    price: 950,
+    rating: 4.9,
+    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop',
+    city: '北京',
+    facilities: ['免费WiFi', '游泳池', '健身房', '水疗中心', '餐厅', '行政酒廊'],
+    starRating: 5,
+    distance: 2.9
+  },
+  {
+    id: 17,
+    name: '北京昆仑饭店',
+    address: '北京市朝阳区新源南路',
+    price: 620,
+    rating: 4.4,
+    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop',
+    city: '北京',
+    facilities: ['免费WiFi', '停车场', '健身房', '餐厅', '会议室'],
+    starRating: 4,
+    distance: 4.8
+  },
+  {
+    id: 18,
+    name: '北京国际艺苑皇冠假日酒店',
+    address: '北京市东城区王府井大街',
+    price: 580,
+    rating: 4.2,
+    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop',
+    city: '北京',
+    facilities: ['免费WiFi', '健身房', '餐厅', '商务中心'],
+    starRating: 4,
+    distance: 2.3
+  },
+  {
+    id: 19,
+    name: '北京金茂威斯汀大饭店',
+    address: '北京市朝阳区东三环北路',
+    price: 750,
+    rating: 4.6,
+    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop',
+    city: '北京',
+    facilities: ['免费WiFi', '游泳池', '健身房', '水疗中心', '餐厅'],
+    starRating: 5,
+    distance: 3.5
+  },
+  {
+    id: 20,
+    name: '北京柏悦酒店',
+    address: '北京市朝阳区建国门外大街',
+    price: 880,
+    rating: 4.7,
+    image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&auto=format&fit=crop',
+    city: '北京',
+    facilities: ['免费WiFi', '游泳池', '健身房', '水疗中心', '餐厅', '行政酒廊'],
+    starRating: 5,
+    distance: 3.0
   }
 ];
 
@@ -188,6 +309,10 @@ export const getHotels = async (params: HotelQueryParams = {}): Promise<Hotel[]>
         break;
       case 'rating_desc':
         filteredHotels.sort((a, b) => b.rating - a.rating);
+        break;
+      case 'star_high':
+        // 按星级降序排序（高星优先）
+        filteredHotels.sort((a, b) => (b.starRating || 0) - (a.starRating || 0));
         break;
       case 'distance_asc':
         filteredHotels.sort((a, b) => (a.distance || 0) - (b.distance || 0));

@@ -17,7 +17,7 @@
 .filter-row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 24rpx;
+  /* margin-bottom: 24rpx; */
   gap: 32rpx;
 }
 
@@ -26,7 +26,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 16rpx;
+  padding: 12rpx;
   background: #f8f9fa;
   border-radius: 12rpx;
   border: 2rpx solid transparent;
@@ -59,35 +59,56 @@
   margin-left: 8rpx;
 }
 
-/* 价格弹窗 */
-.price-modal-mask {
+@keyframes filterSlideDown {
+  from {
+    height: 0;
+    min-height: 0;
+    opacity: 0;
+    transform: translateY(-20rpx);
+  }
+  to {
+    height: 50vh;
+    min-height: 400rpx;
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 价格/星级伪弹窗 */
+.price-star-modal-mask {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 1000;
-  display: flex;
-  flex-direction: column;
 }
 
-.price-modal-overlay {
-  flex: 1;
+.price-star-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(0, 0, 0, 0.05);
 }
 
-.price-modal-panel {
-  height: 50vh;
-  min-height: 420rpx;
+.price-star-modal-panel {
+  position: fixed;
+  top: 280rpx; /* 导航栏高度 + 筛选栏高度 */
+  left: 0;
+  right: 0;
+  height: 0;
   background: #fff;
-  border-radius: 24rpx 24rpx 0 0;
-  box-shadow: 0 -8rpx 32rpx rgba(0, 0, 0, 0.15);
+  border-radius: 0 0 24rpx 24rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  animation: filterSlideDown 0.3s ease-out forwards;
 }
 
-.price-modal-header {
+.price-star-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -95,13 +116,13 @@
   border-bottom: 1rpx solid #eee;
 }
 
-.price-modal-title {
+.price-star-modal-title {
   font-size: 32rpx;
   font-weight: 700;
   color: #333;
 }
 
-.price-modal-close {
+.price-star-modal-close {
   width: 64rpx;
   height: 64rpx;
   display: flex;
@@ -111,49 +132,53 @@
   color: #999;
 }
 
-.price-modal-body {
+.price-star-modal-body {
   flex: 1;
   overflow: auto;
   padding: 24rpx 32rpx;
 }
 
-.price-modal-range {
+.modal-price-block {
+  margin-bottom: 32rpx;
+}
+
+.modal-price-label {
   font-size: 28rpx;
   color: #333;
   margin-bottom: 16rpx;
   display: block;
 }
 
-.price-modal-sliders {
+.modal-sliders {
   display: flex;
   flex-direction: column;
   gap: 16rpx;
 }
 
-.price-slider-row {
+.modal-slider-row {
   display: flex;
   align-items: center;
   gap: 16rpx;
 }
 
-.price-slider-min {
+.modal-slider-min {
   font-size: 24rpx;
   color: #666;
   min-width: 80rpx;
 }
 
-.price-slider {
+.modal-slider {
   flex: 1;
 }
 
-.price-quick-row {
+.modal-quick-price {
   display: flex;
   flex-wrap: wrap;
   gap: 16rpx;
   margin-top: 24rpx;
 }
 
-.price-quick-btn {
+.modal-quick-btn {
   padding: 16rpx 24rpx;
   background: #f0f0f0;
   border-radius: 12rpx;
@@ -161,39 +186,39 @@
   color: #333;
 }
 
-.price-quick-btn:active {
+.modal-quick-btn:active {
   background: #e6f7ff;
   color: #1890ff;
 }
 
-.price-modal-actions {
-  display: flex;
-  gap: 16rpx;
+.modal-star-block {
   margin-top: 24rpx;
 }
 
-.price-action {
-  flex: 1;
-  text-align: center;
-  padding: 18rpx;
+.modal-star-label {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 16rpx;
+  display: block;
+}
+
+.modal-star-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.modal-star-btn {
+  padding: 16rpx 24rpx;
+  background: #f8f9fa;
   border-radius: 12rpx;
-  font-size: 28rpx;
-  font-weight: 600;
+  font-size: 26rpx;
+  border: 2rpx solid transparent;
 }
 
-.price-action.cancel {
-  background: #f0f0f0;
-  color: #666;
-}
-
-.price-action.ok {
-  background: linear-gradient(135deg, #1890ff, #096dd9);
-  color: #fff;
-}
-
-.price-action-text {
-  font-size: 28rpx;
-  font-weight: 600;
+.modal-star-btn.active {
+  background: #fff7e6;
+  border-color: #faad14;
 }
 
 /* 筛选按钮 */
@@ -502,16 +527,22 @@
   right: 0;
   bottom: 0;
   z-index: 1000;
-  display: flex;
-  flex-direction: column;
 }
 
 .nav-modal-overlay {
-  flex: 1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(0, 0, 0, 0.05);
 }
 
 .nav-modal-panel {
+  position: fixed;
+  top: 180rpx; /* 导航栏高度 */
+  left: 0;
+  right: 0;
   height: 0;
   background: #fff;
   border-radius: 0 0 24rpx 24rpx;
@@ -519,17 +550,21 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: slideDown 0.3s ease-out forwards;
+  animation: navSlideDown 0.3s ease-out forwards;
 }
 
-@keyframes slideDown {
+@keyframes navSlideDown {
   from {
     height: 0;
     min-height: 0;
+    opacity: 0;
+    transform: translateY(-20rpx);
   }
   to {
     height: 33vh;
     min-height: 400rpx;
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -842,4 +877,145 @@
   color: #333;
   min-width: 80rpx;
   text-align: center;
+}
+
+/* 智能排序模态窗口样式 */
+.sort-modal-mask,
+.distance-modal-mask,
+.filter-modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1200;
+}
+
+.sort-modal-overlay,
+.distance-modal-overlay,
+.filter-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.sort-modal-panel {
+  position: fixed;
+  top: 280rpx; /* 导航栏高度 + 筛选栏高度 */
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 0 0 24rpx 24rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 70vh;
+}
+
+.distance-modal-panel,
+.filter-modal-panel {
+  position: fixed;
+  top: 280rpx; /* 导航栏高度 + 筛选栏高度 */
+  left: 0;
+  right: 0;
+  height: 0;
+  background: #fff;
+  border-radius: 0 0 24rpx 24rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: filterSlideDown 0.3s ease-out forwards;
+}
+
+.sort-modal-header,
+.distance-modal-header,
+.filter-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.sort-modal-title,
+.distance-modal-title,
+.filter-modal-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.sort-modal-close,
+.distance-modal-close,
+.filter-modal-close {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  color: #999;
+}
+
+.sort-modal-body,
+.distance-modal-body,
+.filter-modal-body {
+  flex: 1;
+  overflow: auto;
+  padding: 24rpx 32rpx;
+}
+
+.sort-modal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.sort-modal-row:last-child {
+  border-bottom: none;
+}
+
+.sort-modal-row-label {
+  font-size: 24rpx;
+  color: #666;
+  font-weight: normal;
+}
+
+.sort-modal-row-right {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.sort-modal-check {
+  font-size: 28rpx;
+  color: #1890ff;
+  font-weight: bold;
+}
+
+.distance-modal-actions,
+.filter-modal-actions {
+  margin-top: 32rpx;
+}
+
+.distance-modal-button,
+.filter-modal-button {
+  background: linear-gradient(135deg, #1890ff, #096dd9);
+  text-align: center;
+  padding: 24rpx;
+  border-radius: 12rpx;
+}
+
+.distance-modal-button-text,
+.filter-modal-button-text {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #fff;
 }

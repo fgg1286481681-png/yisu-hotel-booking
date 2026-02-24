@@ -28,6 +28,17 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onClick }) => {
           </View>
         </View>
         
+        {/* 星级显示 */}
+        {hotel.starRating && (
+          <View className="hotel-stars">
+            <Text className="stars-text">
+              {'★'.repeat(Math.floor(hotel.starRating))}
+              {'☆'.repeat(5 - Math.floor(hotel.starRating))}
+            </Text>
+            <Text className="stars-label">{hotel.starRating}星</Text>
+          </View>
+        )}
+        
         <Text className="hotel-address">{hotel.address}</Text>
         
         <View className="hotel-facilities">
