@@ -1,0 +1,28 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "email": "admin@example.com",
+      "password": "Password123!",
+      "role": "admin",
+      "displayName": "Admin User",
+      "merchantName": null
+    },
+    {
+      "id": 2,
+      "email": "merchant@example.com",
+      "password": "Password123!",
+      "role": "merchant",
+      "displayName": "Merchant User",
+      "merchantName": "示例商户"
+    },
+    {
+      "id": 3,
+      "email": "1@qq.com",
+      "password": "123456",
+      "role": "admin",
+      "displayName": "haoran",
+      "merchantName": null
+    }
+  ]
+}
