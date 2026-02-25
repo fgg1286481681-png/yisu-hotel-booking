@@ -132,6 +132,23 @@ const ListPage: React.FC = () => {
       }
       if (params.sort) newSearchParams.sort = params.sort as any;
       
+      // 处理星级参数（可能为数组或逗号分隔的字符串）
+      let initialStarRating: number[] = [3]; // 默认值
+      if (params.starRating) {
+        if (Array.isArray(params.starRating)) {
+          // 如果是数组，转换为数字数组
+          initialStarRating = params.starRating.map(r => Number(r));
+        } else if (typeof params.starRating === 'string') {
+          // 如果是逗号分隔的字符串，如"3,4,5"
+          if (params.starRating.includes(',')) {
+            initialStarRating = params.starRating.split(',').map(r => Number(r.trim()));
+          } else {
+            // 单个值
+            initialStarRating = [Number(params.starRating)];
+          }
+        }
+      }
+      
       // 计算住几晚
       if (params.checkIn && params.checkOut) {
         const inDate = new Date(params.checkIn);
@@ -142,8 +159,9 @@ const ListPage: React.FC = () => {
       }
       
       setSearchParams(newSearchParams);
-      setFilters(prev => ({ ...prev, priceRange: initialPriceRange }));
+      setFilters(prev => ({ ...prev, priceRange: initialPriceRange, starRating: initialStarRating }));
       setDraftPriceRange(initialPriceRange);
+      setDraftStarRating(initialStarRating);
       
       // 更新页面标题
       if (newSearchParams.city) {
@@ -153,7 +171,7 @@ const ListPage: React.FC = () => {
       }
 
       // 直接用解析后的参数加载，避免 state 尚未落盘就请求
-      loadHotels(true, newSearchParams, { ...filters, priceRange: initialPriceRange });
+      loadHotels(true, newSearchParams, { ...filters, priceRange: initialPriceRange, starRating: initialStarRating });
       return;
     }
     
@@ -185,8 +203,7 @@ const ListPage: React.FC = () => {
       queryParams.minPrice = effectiveFilters.priceRange[0];
       queryParams.maxPrice = effectiveFilters.priceRange[1];
       if (effectiveFilters.starRating.length > 0) {
-        // 注意：模拟数据中没有星级字段，实际项目中会有多星级筛选逻辑
-        // 实际项目中可能通过多个参数传递多个星级，如starRating=3&starRating=4&starRating=5
+        queryParams.starRating = effectiveFilters.starRating;
       }
       
       // 应用排序

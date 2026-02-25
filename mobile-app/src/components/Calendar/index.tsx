@@ -125,6 +125,18 @@ const Calendar: React.FC<CalendarProps> = ({
       setSelectedSingleDate(parseDate(value));
     }
   }, [mode, value]);
+
+  // 当mode变化时，清除另一个模式的选择状态
+  useEffect(() => {
+    if (mode === 'range') {
+      // 切换到range模式，清除single模式的选择
+      setSelectedSingleDate(null);
+    } else if (mode === 'single') {
+      // 切换到single模式，清除range模式的选择
+      setSelectedStartDate(null);
+      setSelectedEndDate(null);
+    }
+  }, [mode]);
   
   // 星期标题
   const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
@@ -159,17 +171,22 @@ const Calendar: React.FC<CalendarProps> = ({
         setSelectedEndDate(null);
       } else if (selectedStartDate && !selectedEndDate) {
         // 选择结束日期
+        let startDate = selectedStartDate;
+        let endDate = date;
+        
         if (date < selectedStartDate) {
           // 如果选择的日期早于起始日期，交换
+          startDate = date;
+          endDate = selectedStartDate;
           setSelectedStartDate(date);
           setSelectedEndDate(selectedStartDate);
         } else {
           setSelectedEndDate(date);
         }
         
-        // 触发回调
+        // 触发回调，确保入住日期小于离店日期
         if (onChange) {
-          onChange([formatDate(selectedStartDate), formatDate(date)]);
+          onChange([formatDate(startDate), formatDate(endDate)]);
         }
       }
     } else {

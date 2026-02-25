@@ -23,6 +23,7 @@ export interface HotelQueryParams {
   minPrice?: number;
   maxPrice?: number;
   sort?: 'recommend' | 'price_asc' | 'price_desc' | 'rating_desc' | 'distance_asc' | 'star_high';
+  starRating?: number[]; // 星级筛选（多选）
 }
 
 // 模拟酒店数据 - 扩展更多数据
@@ -294,8 +295,10 @@ export const getHotels = async (params: HotelQueryParams = {}): Promise<Hotel[]>
   }
   
   // 根据星级筛选（如果starRating参数存在）
-  if (params.sort === 'rating_desc') {
-    // 按评分排序已经在下面的排序逻辑中处理
+  if (params.starRating && params.starRating.length > 0) {
+    filteredHotels = filteredHotels.filter(hotel => 
+      hotel.starRating && params.starRating!.includes(hotel.starRating)
+    );
   }
   
   // 排序逻辑

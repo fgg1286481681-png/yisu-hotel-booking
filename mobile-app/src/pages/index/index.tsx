@@ -70,7 +70,7 @@ const IndexPage: React.FC = () => {
   const [checkOutDate, setCheckOutDate] = useState('2024-02-22');
   const [nights, setNights] = useState(2);
   const [priceRange, setPriceRange] = useState([200, 800]);
-  const [starRating, setStarRating] = useState(3);
+  const [starRating, setStarRating] = useState<number[]>([3]);
   const [nearbyHotels, setNearbyHotels] = useState<Hotel[]>([]);
 
   // 新增状态
@@ -102,6 +102,29 @@ const IndexPage: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 仅随 isDomestic 切换时同步城市
   }, [isDomestic]);
+
+  // 切换住宿/钟点房时，清除相应的日期状态
+  useEffect(() => {
+    if (isHourlyRoom) {
+      // 切换到钟点房模式，清除离店日期，将晚数设为0
+      setNights(0);
+      // 保留入住日期作为钟点房日期
+    } else {
+      // 切换到住宿模式，如果没有离店日期，设置默认离店日期（入住日期+1天）
+      if (!checkOutDate || checkOutDate === checkInDate) {
+        const inDate = new Date(checkInDate);
+        const outDate = new Date(inDate);
+        outDate.setDate(outDate.getDate() + 1);
+        const outDateStr = outDate.toISOString().split('T')[0];
+        setCheckOutDate(outDateStr);
+        
+        // 计算住几晚
+        const diffTime = Math.abs(outDate.getTime() - inDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        setNights(diffDays);
+      }
+    }
+  }, [isHourlyRoom]);
 
   const loadInitialData = async () => {
     try {
@@ -161,9 +184,17 @@ const IndexPage: React.FC = () => {
     setNights(diffDays);
   };
 
-  // 处理星级选择
+  // 处理星级选择（多选）
   const handleStarRatingChange = (rating: number) => {
-    setStarRating(rating);
+    setStarRating(prev => {
+      if (prev.includes(rating)) {
+        // 如果已经选中，则移除
+        return prev.filter(r => r !== rating);
+      } else {
+        // 如果未选中，则添加
+        return [...prev, rating];
+      }
+    });
   };
 
   // 执行搜索
@@ -174,6 +205,7 @@ const IndexPage: React.FC = () => {
       checkOut: checkOutDate,
       minPrice: priceRange[0],
       maxPrice: priceRange[1],
+      starRating: starRating.length > 0 ? starRating : undefined,
     };
 
     Taro.navigateTo({
@@ -233,7 +265,7 @@ const IndexPage: React.FC = () => {
   // 清除价格和星级筛选
   const handleClearPriceStar = () => {
     setPriceRange([200, 800]); // 重置为默认值
-    setStarRating(3); // 重置为默认值
+    setStarRating([3]); // 重置为默认值
     setSelectedPriceOption(null); // 清除选中的快捷价格选项
   };
 
@@ -517,7 +549,7 @@ const IndexPage: React.FC = () => {
                   {[2, 3, 4, 5].map(star => (
                     <View
                       key={star}
-                      className={`modal-star-btn ${starRating === star ? 'active' : ''}`}
+                      className={`modal-star-btn ${starRating.includes(star) ? 'active' : ''}`}
                       onClick={() => handleStarRatingChange(star)}
                     >
                       <Text>⭐ {star}星</Text>
