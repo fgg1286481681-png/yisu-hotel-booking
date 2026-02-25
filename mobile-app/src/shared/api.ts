@@ -88,7 +88,9 @@ export interface HotelQueryParams {
   sort?: 'recommend' | 'price_asc' | 'price_desc' | 'rating_desc' | 'distance_asc' | 'star_high';
 }
 
-const BASE_URL = 'http://localhost:3001';
+// 开发环境使用本地 Mock 服务器，生产环境使用正式服务器
+// eslint-disable-next-line no-undef
+const BASE_URL = API_BASE_URL || 'http://localhost:3001';
 
 interface PublicHotelListResponse {
   success: boolean;

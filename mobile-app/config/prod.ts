@@ -1,8 +1,12 @@
 import type { UserConfigExport } from "@tarojs/cli"
 
+// 生产环境使用正式服务器地址（需要已备案的 HTTPS 域名）
 export default {
+  defineConstants: {
+    API_BASE_URL: JSON.stringify('https://your-production-api.com')
+  },
   mini: {},
-  h5: {
+  h5: {}
     /**
      * WebpackChain 插件配置
      * @docs https://github.com/neutrinojs/webpack-chain
