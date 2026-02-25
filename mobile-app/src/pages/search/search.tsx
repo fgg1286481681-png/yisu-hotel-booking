@@ -1,28 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, Input, Image } from '@tarojs/components';
 import Taro from '@tarojs/taro';
+import { getHotels, Hotel } from '../../services/unifiedApi';
 import './search.css';
 
-// 热搜数据
+// 热搜数据（文案保持不变，但真正搜索会走统一酒店数据）
 const hotSearchData = [
-  { id: 1, name: '北京王府井酒店', desc: '靠近王府井步行街，交通便利' },
-  { id: 2, name: '上海外滩酒店', desc: '外滩景观，豪华体验' },
-  { id: 3, name: '广州珠江新城酒店', desc: 'CBD核心区，商务出行首选' },
-  { id: 4, name: '深圳南山酒店', desc: '科技园区附近，适合商务人士' },
-  { id: 5, name: '成都春熙路酒店', desc: '购物天堂，美食众多' },
-  { id: 6, name: '杭州西湖酒店', desc: '湖景房，风景优美' },
-  { id: 7, name: '西安钟楼酒店', desc: '古城中心，旅游便利' },
-  { id: 8, name: '重庆解放碑酒店', desc: '商圈核心，夜景迷人' },
-];
-
-// 推荐酒店数据
-const recommendHotels = [
-  { id: 1, name: '北京国际饭店', location: '北京市东城区', price: '¥680起', image: '🏨' },
-  { id: 2, name: '上海和平饭店', location: '上海市黄浦区', price: '¥980起', image: '🏨' },
-  { id: 3, name: '广州白天鹅宾馆', location: '广州市荔湾区', price: '¥780起', image: '🏨' },
-  { id: 4, name: '深圳香格里拉酒店', location: '深圳市福田区', price: '¥880起', image: '🏨' },
-  { id: 5, name: '成都锦江宾馆', location: '成都市锦江区', price: '¥580起', image: '🏨' },
-  { id: 6, name: '杭州西子宾馆', location: '杭州市西湖区', price: '¥680起', image: '🏨' },
+  { id: 1, name: '北京', desc: '北京热门商圈与景点' },
+  { id: 2, name: '上海', desc: '外滩、陆家嘴热门酒店' },
+  { id: 3, name: '广州', desc: '珠江新城与上下九步行街' },
+  { id: 4, name: '三亚', desc: '海景度假与亲子酒店' },
+  { id: 5, name: '成都', desc: '春熙路与青城山度假' },
+  { id: 6, name: '易宿', desc: '易宿品牌全国门店' },
+  { id: 7, name: '爱住', desc: '爱住品牌精选与度假' },
 ];
 
 const SearchPage: React.FC = () => {
@@ -30,7 +20,8 @@ const SearchPage: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [currentCity, setCurrentCity] = useState('北京');
   const [showResults, setShowResults] = useState(false);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<Hotel[]>([]);
+  const [loading, setLoading] = useState(false);
   
   // 搜索输入框引用
   const searchInputRef = useRef<any>(null);
@@ -59,7 +50,52 @@ const SearchPage: React.FC = () => {
     }, 300);
   }, []);
 
-  // 处理搜索
+  // 执行搜索：调用统一API + 本地匹配
+  const performSearch = async (keyword: string) => {
+    const trimmed = keyword.trim();
+    if (!trimmed) {
+      Taro.showToast({
+        title: '请输入搜索内容',
+        icon: 'none',
+        duration: 2000
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // 先按当前城市拉取一批酒店数据，再在前端做关键字匹配
+      const hotels = await getHotels({ city: currentCity });
+      const lower = trimmed.toLowerCase();
+
+      const results = hotels.filter((hotel) => {
+        const name = (hotel.name || '').toLowerCase();
+        const address = (hotel.address || '').toLowerCase();
+        const city = (hotel.city || '').toLowerCase();
+        const brand = (hotel as any).brand ? String((hotel as any).brand).toLowerCase() : '';
+        return (
+          name.includes(lower) ||
+          address.includes(lower) ||
+          city.includes(lower) ||
+          brand.includes(lower)
+        );
+      });
+
+      setSearchResults(results);
+      setShowResults(true);
+    } catch (error) {
+      console.error('搜索酒店失败:', error);
+      Taro.showToast({
+        title: '搜索失败，请稍后重试',
+        icon: 'none',
+        duration: 2000
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 处理搜索按钮 / 键盘回车
   const handleSearch = () => {
     if (!searchText.trim()) {
       Taro.showToast({
@@ -69,14 +105,7 @@ const SearchPage: React.FC = () => {
       });
       return;
     }
-
-    // 模拟搜索
-    const results = recommendHotels.filter(hotel =>
-      hotel.name.includes(searchText) || hotel.location.includes(searchText)
-    );
-    
-    setSearchResults(results);
-    setShowResults(true);
+    performSearch(searchText);
   };
 
   // 处理取消
@@ -88,11 +117,7 @@ const SearchPage: React.FC = () => {
   const handleHotSearchClick = (item: any) => {
     setSearchText(item.name);
     // 自动搜索
-    const results = recommendHotels.filter(hotel =>
-      hotel.name.includes(item.name) || hotel.location.includes(item.name)
-    );
-    setSearchResults(results);
-    setShowResults(true);
+    performSearch(item.name);
   };
 
   // 处理推荐酒店点击
@@ -134,28 +159,40 @@ const SearchPage: React.FC = () => {
       {showResults ? (
         // 搜索结果
         <View>
-          {searchResults.length > 0 ? (
-            <View className="recommend-section">
-              <Text className="recommend-title">搜索结果 ({searchResults.length})</Text>
-              <View className="recommend-list">
-                {searchResults.map(hotel => (
-                  <View
-                    key={hotel.id}
-                    className="recommend-item"
-                    onClick={() => handleRecommendClick(hotel)}
-                  >
-                    <View className="recommend-image">
-                      <Text>{hotel.image}</Text>
-                    </View>
-                    <View className="recommend-info">
-                      <Text className="recommend-name">{hotel.name}</Text>
-                      <Text className="recommend-location">{hotel.location}</Text>
-                      <Text className="recommend-price">{hotel.price}</Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
+          {loading ? (
+            <View className="empty-state">
+              <Text className="empty-icon">⏳</Text>
+              <Text className="empty-title">正在搜索中...</Text>
+              <Text className="empty-desc">请稍候</Text>
             </View>
+          ) : searchResults.length > 0 ? (
+              <View className="recommend-section">
+                <Text className="recommend-title">搜索结果 ({searchResults.length})</Text>
+                <View className="recommend-list">
+                  {searchResults.map(hotel => (
+                    <View
+                      key={hotel.id}
+                      className="recommend-item"
+                      onClick={() => handleRecommendClick(hotel)}
+                    >
+                      <View className="recommend-image">
+                        <Image
+                          src={hotel.image}
+                          mode="aspectFill"
+                          className="recommend-image-img"
+                        />
+                      </View>
+                      <View className="recommend-info">
+                        <Text className="recommend-name">{hotel.name}</Text>
+                        <Text className="recommend-location">
+                          {hotel.city} · {hotel.address}
+                        </Text>
+                        <Text className="recommend-price">¥{hotel.price}起</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              </View>
           ) : (
             <View className="empty-state">
               <Text className="empty-icon">🔍</Text>
@@ -193,26 +230,15 @@ const SearchPage: React.FC = () => {
             </View>
           </View>
 
-          {/* 推荐酒店部分 */}
+          {/* 推荐酒店部分（占位，暂不渲染具体列表，避免未定义数据导致报错） */}
           <View className="recommend-section">
             <Text className="recommend-title">{currentCity}推荐酒店</Text>
             <View className="recommend-list">
-              {recommendHotels.map(hotel => (
-                <View
-                  key={hotel.id}
-                  className="recommend-item"
-                  onClick={() => handleRecommendClick(hotel)}
-                >
-                  <View className="recommend-image">
-                    <Text>{hotel.image}</Text>
-                  </View>
-                  <View className="recommend-info">
-                    <Text className="recommend-name">{hotel.name}</Text>
-                    <Text className="recommend-location">{hotel.location}</Text>
-                    <Text className="recommend-price">{hotel.price}</Text>
-                  </View>
-                </View>
-              ))}
+              <View className="empty-state">
+                <Text className="empty-icon">✨</Text>
+                <Text className="empty-title">试试上面的热搜或自行输入</Text>
+                <Text className="empty-desc">搜索“易宿 / 爱住 / 城市名 / 酒店名”即可查看 PC Mock 中的门店</Text>
+              </View>
             </View>
           </View>
         </View>

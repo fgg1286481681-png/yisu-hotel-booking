@@ -40,6 +40,27 @@
   margin-bottom: 16rpx;
 }
 
+.hotel-star-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 12rpx;
+}
+
+.star-badge {
+  background: #fff7e6;
+  border-radius: 8rpx;
+  padding: 4rpx 12rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #fa8c16;
+}
+
+.star-text {
+  font-size: 24rpx;
+  color: #999;
+}
+
 .hotel-name {
   font-size: 36rpx;
   font-weight: 700;

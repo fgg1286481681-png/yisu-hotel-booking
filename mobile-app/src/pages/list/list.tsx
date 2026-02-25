@@ -6,14 +6,52 @@ import Calendar from '../../components/Calendar';
 import { Hotel, HotelQueryParams, getHotels } from '../../services/unifiedApi';
 import './list.css';
 
-// 排序选项
+// 排序类型（智能 / 低价 / 高价 / 好评 / 高星 / 距离）
+type SortType = 'recommend' | 'price_asc' | 'price_desc' | 'rating_desc' | 'distance_asc' | 'star_high';
+
+// 排序选项（顶部文案）
 const sortOptions = [
-  { label: '推荐排序', value: 'recommend' },
-  { label: '价格从低到高', value: 'price_asc' },
-  { label: '价格从高到低', value: 'price_desc' },
-  { label: '评分从高到低', value: 'rating_desc' },
-  { label: '距离从近到远', value: 'distance_asc' },
+  { label: '推荐排序', value: 'recommend' as SortType },
+  { label: '价格从低到高', value: 'price_asc' as SortType },
+  { label: '价格从高到低', value: 'price_desc' as SortType },
+  { label: '评分从高到低', value: 'rating_desc' as SortType },
+  { label: '距离从近到远', value: 'distance_asc' as SortType },
 ];
+
+// 本地排序函数：保证“智能 / 低价 / 高价 / 高星”等排序在前端稳定生效
+const sortHotelsLocally = (list: Hotel[], sortBy: SortType): Hotel[] => {
+  const hotelsCopy = [...list];
+
+  switch (sortBy) {
+    case 'price_asc':
+      hotelsCopy.sort((a, b) => a.price - b.price);
+      break;
+    case 'price_desc':
+      hotelsCopy.sort((a, b) => b.price - a.price);
+      break;
+    case 'rating_desc':
+      hotelsCopy.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      break;
+    case 'star_high':
+      // 高星优先：按星级从高到低
+      hotelsCopy.sort((a, b) => (b.starRating || 0) - (a.starRating || 0));
+      break;
+    case 'distance_asc':
+      hotelsCopy.sort((a, b) => (a.distance || 0) - (b.distance || 0));
+      break;
+    case 'recommend':
+    default:
+      // 智能排序：综合“评分高 + 价格更优”
+      hotelsCopy.sort((a, b) => {
+        const scoreA = (a.rating || 0) * 20 - a.price / 50;
+        const scoreB = (b.rating || 0) * 20 - b.price / 50;
+        return scoreB - scoreA;
+      });
+      break;
+  }
+
+  return hotelsCopy;
+};
 
 // 星级选项
 const starOptions = [
@@ -38,15 +76,18 @@ const ListPage: React.FC = () => {
   const [filters, setFilters] = useState({
     priceRange: DEFAULT_PRICE_RANGE as [number, number],
     starRating: [] as number[], // 默认为不限星级（空数组）
-    sortBy: 'recommend' as 'recommend' | 'price_asc' | 'price_desc' | 'rating_desc' | 'distance_asc' | 'star_high',
+    sortBy: 'recommend' as SortType,
   });
 
+  // 价格上限滑块的最大值（用于“400以上”这一档，600 仅作为内部标记，不直接展示给用户）
   const PRICE_MAX = 600;
+  // 价格下限可选的最大值为 400
+  const PRICE_MIN_MAX = 400;
   const priceQuickOptions: Array<{ label: string; value: [number, number] }> = [
     { label: '¥0-200', value: [0, 200] },
     { label: '¥200-300', value: [200, 300] },
-    { label: '¥300-500', value: [300, 500] },
-    { label: '¥500以上', value: [500, PRICE_MAX] },
+    { label: '¥300-400', value: [300, 400] },
+    { label: '¥400以上', value: [400, PRICE_MAX] },
   ];
 
   const [showPriceModal, setShowPriceModal] = useState(false);
@@ -78,14 +119,14 @@ const ListPage: React.FC = () => {
   // 日历组件状态
   const [showCalendar, setShowCalendar] = useState(false);
 
-  // 排序选项 - 对应api.ts中的排序参数
+  // 排序选项 - 对应排序参数
   const sortModalOptions = [
-    { id: 'smart', label: '智能排序', value: 'recommend' },
-    { id: 'price_low', label: '低价优先', value: 'price_asc' },
-    { id: 'price_high', label: '高价优先', value: 'price_desc' },
-    { id: 'rating', label: '好评优先', value: 'rating_desc' },
-    { id: 'star_high', label: '高星优先', value: 'star_high' },
-    { id: 'distance', label: '直线距离', value: 'distance_asc' },
+    { id: 'smart', label: '智能排序', value: 'recommend' as SortType },
+    { id: 'price_low', label: '低价优先', value: 'price_asc' as SortType },
+    { id: 'price_high', label: '高价优先', value: 'price_desc' as SortType },
+    { id: 'rating', label: '好评优先', value: 'rating_desc' as SortType },
+    { id: 'star_high', label: '高星优先', value: 'star_high' as SortType },
+    { id: 'distance', label: '直线距离', value: 'distance_asc' as SortType },
   ];
 
   const [selectedSort, setSelectedSort] = useState('recommend');
@@ -94,7 +135,7 @@ const ListPage: React.FC = () => {
   const [searchParams, setSearchParams] = useState<HotelQueryParams>({});
 
   const priceRangeText = useMemo(() => {
-    const maxText = filters.priceRange[1] >= PRICE_MAX ? '500+' : String(filters.priceRange[1]);
+    const maxText = filters.priceRange[1] >= PRICE_MAX ? '400+' : String(filters.priceRange[1]);
     return `¥${filters.priceRange[0]} - ¥${maxText}`;
   }, [filters.priceRange]);
 
@@ -128,8 +169,8 @@ const ListPage: React.FC = () => {
       }
       if (params.minPrice) {
         const min = Number(params.minPrice);
-        // 如果有 maxPrice，用它；否则如果 min >= 500（用户选择的是"500以上"），则不限制最大价格
-        // PRICE_MAX=600 代表滑块的"500以上"档位
+        // 如果有 maxPrice，用它；否则如果 min >= 400（用户选择的是"400以上"），则不限制最大价格
+        // PRICE_MAX=600 代表滑块的"400以上"档位
         const max = params.maxPrice
           ? Number(params.maxPrice)
           : (min >= 500 ? PRICE_MAX : DEFAULT_PRICE_RANGE[1]);
@@ -232,17 +273,54 @@ const ListPage: React.FC = () => {
 
       const data = await getHotels(queryParams);
 
+      // 先在前端按照价格区间和星级做一次兜底过滤，避免后端未完全处理筛选条件
+      const filteredData = data.filter(hotel => {
+        const [minPrice, maxPrice] = effectiveFilters.priceRange;
+
+        // 价格下限过滤
+        if (hotel.price < minPrice) {
+          return false;
+        }
+
+        // 价格上限过滤（当 maxPrice 为 PRICE_MAX 时，表示“400以上”，不再限制上限）
+        if (maxPrice < PRICE_MAX && hotel.price > maxPrice) {
+          return false;
+        }
+
+        // 星级过滤（空数组表示不限）
+        if (
+          effectiveFilters.starRating.length > 0 &&
+          !effectiveFilters.starRating.includes(hotel.starRating || 0)
+        ) {
+          return false;
+        }
+
+        return true;
+      });
+
+      // 无论后端是否支持排序参数，这里都在前端兜底做一次排序，确保用户所见顺序正确
+      const sortedData = sortHotelsLocally(filteredData, effectiveFilters.sortBy as SortType);
+
       if (isRefresh) {
-        setHotels(data);
+        setHotels(sortedData);
         setPage(1);
+
+        // 如果是重新筛选后的首次加载且没有匹配酒店，给出友好提示
+        if (sortedData.length === 0) {
+          Taro.showToast({
+            title: '未搜索到合适的目标',
+            icon: 'none',
+            duration: 2000,
+          });
+        }
       } else {
-        setHotels(prev => [...prev, ...data]);
+        setHotels(prev => [...prev, ...sortedData]);
         setPage(currentPage + 1);
       }
 
-      // 模拟是否有更多数据
-      setHasMore(data.length === 5);
-      setTotal(prev => isRefresh ? data.length : prev + data.length);
+      // 是否还有更多数据
+      setHasMore(sortedData.length === 5);
+      setTotal(prev => (isRefresh ? sortedData.length : prev + sortedData.length));
 
     } catch (error) {
       console.error('加载酒店数据失败:', error);
@@ -412,11 +490,29 @@ const ListPage: React.FC = () => {
     setShowCalendar(false);
   };
 
-  // 应用导航栏修改
+  // 应用导航栏修改（城市 / 日期 / 房间人数）
   const applyNavChanges = () => {
     setShowNavModal(false);
-    // 这里可以添加更新搜索参数的逻辑
-    // 例如：重新加载酒店数据
+
+    // 将当前位置和日期写入搜索参数，并按新城市重新搜索
+    const newSearchParams: HotelQueryParams = {
+      ...searchParams,
+      city: location.city,        // 按当前选择的城市搜索
+      checkIn: checkInDate,       // 使用当前入住日期
+      checkOut: checkOutDate,     // 使用当前离店日期
+    };
+
+    setSearchParams(newSearchParams);
+
+    // 更新页面标题为当前城市
+    if (location.city) {
+      Taro.setNavigationBarTitle({
+        title: `${location.city}酒店列表`,
+      });
+    }
+
+    // 使用最新搜索条件刷新酒店列表
+    loadHotels(true, newSearchParams);
   };
 
   // 星级显示文本
@@ -487,8 +583,8 @@ const ListPage: React.FC = () => {
             // 根据当前价格范围确定选中的快捷选项
             const quickIndex = priceQuickOptions.findIndex(
               opt => opt.value[0] === filters.priceRange[0] &&
-                     (opt.value[1] === filters.priceRange[1] ||
-                      (filters.priceRange[1] >= 600 && opt.value[1] === 600))
+                (opt.value[1] === filters.priceRange[1] ||
+                  (filters.priceRange[1] >= 600 && opt.value[1] === 600))
             );
             setSelectedPriceOption(quickIndex >= 0 ? quickIndex : null);
             setShowPriceModal(true);
@@ -522,7 +618,7 @@ const ListPage: React.FC = () => {
                     <Slider
                       className="modal-slider"
                       min={0}
-                      max={PRICE_MAX}
+                      max={PRICE_MIN_MAX}
                       value={draftPriceRange[0]}
                       onChanging={handleDraftMinChange}
                       onChange={handleDraftMinChange}
@@ -532,7 +628,7 @@ const ListPage: React.FC = () => {
                     />
                   </View>
                   <View className="modal-slider-row">
-                    <Text className="modal-slider-min">¥{draftPriceRange[1] >= PRICE_MAX ? '500+' : draftPriceRange[1]}</Text>
+                    <Text className="modal-slider-min">¥{draftPriceRange[1] >= PRICE_MAX ? '400+' : draftPriceRange[1]}</Text>
                     <Slider
                       className="modal-slider"
                       min={0}
@@ -782,19 +878,19 @@ const ListPage: React.FC = () => {
                 <Text>搜索城市...</Text>
               </View>
               <View className="city-list">
-                <View className="city-item" onClick={() => { setLocation({...location, city: '北京'}); setShowCityModal(false); }}>
+                <View className="city-item" onClick={() => { setLocation({ ...location, city: '北京' }); setShowCityModal(false); }}>
                   <Text>北京</Text>
                 </View>
-                <View className="city-item" onClick={() => { setLocation({...location, city: '上海'}); setShowCityModal(false); }}>
+                <View className="city-item" onClick={() => { setLocation({ ...location, city: '上海' }); setShowCityModal(false); }}>
                   <Text>上海</Text>
                 </View>
-                <View className="city-item" onClick={() => { setLocation({...location, city: '广州'}); setShowCityModal(false); }}>
+                <View className="city-item" onClick={() => { setLocation({ ...location, city: '广州' }); setShowCityModal(false); }}>
                   <Text>广州</Text>
                 </View>
-                <View className="city-item" onClick={() => { setLocation({...location, city: '深圳'}); setShowCityModal(false); }}>
+                <View className="city-item" onClick={() => { setLocation({ ...location, city: '深圳' }); setShowCityModal(false); }}>
                   <Text>深圳</Text>
                 </View>
-                <View className="city-item" onClick={() => { setLocation({...location, city: '杭州'}); setShowCityModal(false); }}>
+                <View className="city-item" onClick={() => { setLocation({ ...location, city: '杭州' }); setShowCityModal(false); }}>
                   <Text>杭州</Text>
                 </View>
               </View>
@@ -907,8 +1003,8 @@ const ListPage: React.FC = () => {
         {!loading && hotels.length === 0 && (
           <View className="empty-state">
             <Text className="empty-icon">🏨</Text>
-            <Text className="empty-title">暂无符合条件的酒店</Text>
-            <Text className="empty-desc">尝试调整筛选条件或选择其他城市</Text>
+            <Text className="empty-title">未搜索到合适的目标</Text>
+            <Text className="empty-desc">尝试调整价格区间、星级或其他筛选条件</Text>
             <View className="empty-action" onClick={resetFilters}>
               <Text className="empty-action-text">重置筛选条件</Text>
             </View>

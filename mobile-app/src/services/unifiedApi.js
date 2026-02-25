@@ -9,8 +9,10 @@ import { getHotels as getMockHotels, getHotel as getMockHotel, getCities as getM
 import { fetchHotelsFromApi, fetchHotelDetailFromApi, fetchRoomTypesFromApi } from './api';
 import { adaptHotelFromPC, adaptRoomTypeFromPC, getMockHotelImage, getMockRoomImage } from './adapter';
 
-// 配置：是否使用后端API（开发环境设为true）
-const USE_BACKEND_API = true; // 生产环境应为 true
+// 配置：是否使用后端API
+// 现在改为默认启用 PC 端 Mock Server，这样移动端与 PC 端共用一份酒店数据（包括“易宿 / 爱住”等）。
+// 如需临时只看本地模拟数据，可将该值改回 false。
+const USE_BACKEND_API = true;
 
 /**
  * 获取酒店列表（统一入口）

@@ -397,10 +397,10 @@ app.get('/api/public/hotels/:id', (req, res) => {
 
     // 获取该酒店的房型
     const roomTypes = (db.roomTypes || []).filter(rt => rt.hotelId === id);
-    
+
     // 返回包含房型的酒店详情
-    return res.json({ 
-        success: true, 
+    return res.json({
+        success: true,
         hotel: {
             ...sanitizeHotel(hotel),
             roomTypes: roomTypes
@@ -468,7 +468,7 @@ app.post('/api/hotels/:id/room-types', (req, res) => {
     }
 
     const { roomTypeJson, images } = req.body;
-    
+
     // 解析房型数据
     let roomTypeData;
     try {
@@ -477,17 +477,17 @@ app.post('/api/hotels/:id/room-types', (req, res) => {
         return res.status(400).json({ message: '房型数据格式错误' });
     }
 
-    const { 
-        name, 
-        description, 
-        tags, 
-        price, 
-        originalPrice, 
-        area, 
-        bedType, 
-        maxOccupancy, 
-        breakfastIncluded, 
-        cancellationPolicy 
+    const {
+        name,
+        description,
+        tags,
+        price,
+        originalPrice,
+        area,
+        bedType,
+        maxOccupancy,
+        breakfastIncluded,
+        cancellationPolicy
     } = roomTypeData;
 
     if (!name || !price) {
@@ -503,7 +503,7 @@ app.post('/api/hotels/:id/room-types', (req, res) => {
     }
 
     const newId = db.roomTypes.length ? Math.max(...db.roomTypes.map(rt => rt.id || 0)) + 1 : 1;
-    
+
     const newRoomType = {
         id: newId,
         hotelId,

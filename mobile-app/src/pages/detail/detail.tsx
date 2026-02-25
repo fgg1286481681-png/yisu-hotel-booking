@@ -169,6 +169,24 @@ const DetailPage: React.FC = () => {
     );
   }
 
+  const getStarLabel = (star: number | undefined) => {
+    if (!star) return '';
+    switch (star) {
+      case 1:
+        return '经济型';
+      case 2:
+        return '舒适型';
+      case 3:
+        return '高档型';
+      case 4:
+        return '豪华型';
+      case 5:
+        return '五星级';
+      default:
+        return `${star}星级`;
+    }
+  };
+
   return (
     <View className="detail-page">
       {/* 轮播图区域 - 使用真实的多张图片 */}
@@ -203,6 +221,13 @@ const DetailPage: React.FC = () => {
             <Text className="rating-label">分</Text>
           </View>
         </View>
+
+        {hotel.starRating && hotel.starRating > 0 && (
+          <View className="hotel-star-row">
+            <Text className="star-badge">{hotel.starRating}星</Text>
+            <Text className="star-text">{getStarLabel(hotel.starRating)}</Text>
+          </View>
+        )}
 
         <Text className="hotel-address">{hotel.address}</Text>
         
