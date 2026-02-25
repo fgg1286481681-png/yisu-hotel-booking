@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, Image, Swiper, SwiperItem, Picker, Button, ScrollView, Slider } from '@tarojs/components';
 import Taro from '@tarojs/taro';
-import { getHotels, Hotel, HotelQueryParams } from '../../../../shared/api';
+import { getHotels, Hotel, HotelQueryParams } from '../../services/unifiedApi';
 import Calendar from '../../components/Calendar';
 import './index.css';
 import NearbyHotelCard from '../../components/NearbyHotelCard';

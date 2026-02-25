@@ -15,7 +15,8 @@ const DB_PATH = path.join(__dirname, 'db.json');
 const tokenStore = new Map();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Helper to read DB
 function readDb() {
@@ -34,6 +35,14 @@ function readDb() {
 // Helper to write DB
 function writeDb(db) {
     fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2), 'utf-8');
+}
+
+// 确保数据库有roomTypes数组
+function ensureRoomTypes(db) {
+    if (!db.roomTypes) {
+        db.roomTypes = [];
+    }
+    return db;
 }
 
 // Simple token generator (not secure; demo only)
@@ -368,7 +377,7 @@ app.get('/api/public/hotels', (req, res) => {
     return res.json({ success: true, hotels });
 });
 
-// GET /api/public/hotels/:id 公开酒店详情
+// GET /api/public/hotels/:id 公开酒店详情（包含房型）
 app.get('/api/public/hotels/:id', (req, res) => {
     const id = Number(req.params.id);
     const db = readDb();
@@ -379,7 +388,239 @@ app.get('/api/public/hotels/:id', (req, res) => {
         return res.status(404).json({ message: '酒店不存在或未发布' });
     }
 
-    return res.json({ success: true, hotel: sanitizeHotel(hotel) });
+    // 获取该酒店的房型
+    const roomTypes = (db.roomTypes || []).filter(rt => rt.hotelId === id);
+    
+    // 返回包含房型的酒店详情
+    return res.json({ 
+        success: true, 
+        hotel: {
+            ...sanitizeHotel(hotel),
+            roomTypes: roomTypes
+        }
+    });
+});
+
+// GET /api/public/roomTypes 公开房型列表
+app.get('/api/public/roomTypes', (req, res) => {
+    const { hotelId } = req.query;
+    const db = readDb();
+    let roomTypes = db.roomTypes || [];
+
+    // 如果指定了hotelId，则只返回该酒店的房型
+    if (hotelId) {
+        roomTypes = roomTypes.filter(rt => rt.hotelId === Number(hotelId));
+    }
+
+    return res.json({ success: true, roomTypes });
+});
+
+// GET /api/public/roomTypes/:id 公开房型详情
+app.get('/api/public/roomTypes/:id', (req, res) => {
+    const id = Number(req.params.id);
+    const db = readDb();
+    const roomTypes = db.roomTypes || [];
+
+    const roomType = roomTypes.find(rt => rt.id === id);
+    if (!roomType) {
+        return res.status(404).json({ message: '房型不存在' });
+    }
+
+    // 检查关联的酒店是否已发布
+    const hotel = (db.hotels || []).find(h => h.id === roomType.hotelId && h.status === 'approved');
+    if (!hotel) {
+        return res.status(404).json({ message: '房型不存在或酒店未发布' });
+    }
+
+    return res.json({ success: true, roomType });
+});
+
+// ---------- 商户端酒店房型管理 API ----------
+
+// POST /api/hotels/:id/room-types 创建房型
+app.post('/api/hotels/:id/room-types', (req, res) => {
+    const currentUser = getUserFromToken(req);
+    if (!currentUser) {
+        return res.status(401).json({ message: '未授权' });
+    }
+
+    const hotelId = Number(req.params.id);
+    const db = readDb();
+    db.roomTypes = ensureRoomTypes(db).roomTypes || [];
+    const hotels = db.hotels || [];
+
+    // 检查酒店是否存在
+    const hotel = hotels.find(h => h.id === hotelId);
+    if (!hotel) {
+        return res.status(404).json({ message: '酒店不存在' });
+    }
+
+    // 商户只能为自己的酒店创建房型
+    if (currentUser.role === 'merchant' && hotel.merchantId !== currentUser.id) {
+        return res.status(403).json({ message: '无权为该酒店创建房型' });
+    }
+
+    const { roomTypeJson, images } = req.body;
+    
+    // 解析房型数据
+    let roomTypeData;
+    try {
+        roomTypeData = typeof roomTypeJson === 'string' ? JSON.parse(roomTypeJson) : roomTypeJson;
+    } catch (e) {
+        return res.status(400).json({ message: '房型数据格式错误' });
+    }
+
+    const { 
+        name, 
+        description, 
+        tags, 
+        price, 
+        originalPrice, 
+        area, 
+        bedType, 
+        maxOccupancy, 
+        breakfastIncluded, 
+        cancellationPolicy 
+    } = roomTypeData;
+
+    if (!name || !price) {
+        return res.status(400).json({ message: '请填写房型名称和价格' });
+    }
+
+    // 处理图片（简单处理：将上传的图片转为URL）
+    let imageUrl = '';
+    let imageList = [];
+    if (images && Array.isArray(images)) {
+        imageList = images.map((img, idx) => `https://via.placeholder.com/800x600?text=${encodeURIComponent(name)}+${idx + 1}`);
+        imageUrl = imageList[0] || '';
+    }
+
+    const newId = db.roomTypes.length ? Math.max(...db.roomTypes.map(rt => rt.id || 0)) + 1 : 1;
+    
+    const newRoomType = {
+        id: newId,
+        hotelId,
+        name,
+        description: description || '',
+        tags: tags || [],
+        price: Number(price),
+        originalPrice: originalPrice ? Number(originalPrice) : undefined,
+        area: area || '',
+        bedType: bedType || '',
+        maxOccupancy: maxOccupancy || 2,
+        breakfastIncluded: breakfastIncluded || false,
+        cancellationPolicy: cancellationPolicy || '',
+        image: imageUrl,
+        images: imageList,
+        createdAt: Date.now()
+    };
+
+    db.roomTypes.push(newRoomType);
+    writeDb(db);
+
+    return res.json({ success: true, roomType: newRoomType });
+});
+
+// PATCH /api/hotels/:id/room-types/:roomTypeId 更新房型
+app.patch('/api/hotels/:hotelId/room-types/:roomTypeId', (req, res) => {
+    const currentUser = getUserFromToken(req);
+    if (!currentUser) {
+        return res.status(401).json({ message: '未授权' });
+    }
+
+    const hotelId = Number(req.params.hotelId);
+    const roomTypeId = Number(req.params.roomTypeId);
+    const db = readDb();
+    db.roomTypes = ensureRoomTypes(db).roomTypes || [];
+    const hotels = db.hotels || [];
+
+    // 检查酒店
+    const hotel = hotels.find(h => h.id === hotelId);
+    if (!hotel) {
+        return res.status(404).json({ message: '酒店不存在' });
+    }
+
+    // 商户只能编辑自己酒店的房型
+    if (currentUser.role === 'merchant' && hotel.merchantId !== currentUser.id) {
+        return res.status(403).json({ message: '无权编辑该房型' });
+    }
+
+    const index = db.roomTypes.findIndex(rt => rt.id === roomTypeId && rt.hotelId === hotelId);
+    if (index === -1) {
+        return res.status(404).json({ message: '房型不存在' });
+    }
+
+    const updates = req.body;
+    db.roomTypes[index] = {
+        ...db.roomTypes[index],
+        ...updates,
+        updatedAt: Date.now()
+    };
+
+    writeDb(db);
+
+    return res.json({ success: true, roomType: db.roomTypes[index] });
+});
+
+// DELETE /api/hotels/:hotelId/room-types/:roomTypeId 删除房型
+app.delete('/api/hotels/:hotelId/room-types/:roomTypeId', (req, res) => {
+    const currentUser = getUserFromToken(req);
+    if (!currentUser) {
+        return res.status(401).json({ message: '未授权' });
+    }
+
+    const hotelId = Number(req.params.hotelId);
+    const roomTypeId = Number(req.params.roomTypeId);
+    const db = readDb();
+    db.roomTypes = ensureRoomTypes(db).roomTypes || [];
+    const hotels = db.hotels || [];
+
+    // 检查酒店
+    const hotel = hotels.find(h => h.id === hotelId);
+    if (!hotel) {
+        return res.status(404).json({ message: '酒店不存在' });
+    }
+
+    // 商户只能删除自己酒店的房型
+    if (currentUser.role === 'merchant' && hotel.merchantId !== currentUser.id) {
+        return res.status(403).json({ message: '无权删除该房型' });
+    }
+
+    const index = db.roomTypes.findIndex(rt => rt.id === roomTypeId && rt.hotelId === hotelId);
+    if (index === -1) {
+        return res.status(404).json({ message: '房型不存在' });
+    }
+
+    db.roomTypes.splice(index, 1);
+    writeDb(db);
+
+    return res.json({ success: true });
+});
+
+// 商户端：获取自己酒店的房型列表（不需要审核状态）
+app.get('/api/roomTypes', (req, res) => {
+    const currentUser = getUserFromToken(req);
+    if (!currentUser) {
+        return res.status(401).json({ message: '未授权' });
+    }
+
+    const { hotelId } = req.query;
+    const db = readDb();
+    let roomTypes = db.roomTypes || [];
+
+    // 商户只能查看自己酒店的房型
+    if (currentUser.role === 'merchant') {
+        const hotels = (db.hotels || []).filter(h => h.merchantId === currentUser.id);
+        const hotelIds = hotels.map(h => h.id);
+        roomTypes = roomTypes.filter(rt => hotelIds.includes(rt.hotelId));
+    }
+
+    // 如果指定了hotelId
+    if (hotelId) {
+        roomTypes = roomTypes.filter(rt => rt.hotelId === Number(hotelId));
+    }
+
+    return res.json({ success: true, roomTypes });
 });
 
 app.listen(PORT, () => {

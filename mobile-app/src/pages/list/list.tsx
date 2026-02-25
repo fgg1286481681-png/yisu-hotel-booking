@@ -3,7 +3,7 @@ import { View, Text, ScrollView, Picker, Slider } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import HotelCard from '../../components/HotelCard';
 import Calendar from '../../components/Calendar';
-import { Hotel, HotelQueryParams, getHotels } from '../../../../shared/api';
+import { Hotel, HotelQueryParams, getHotels } from '../../services/unifiedApi';
 import './list.css';
 
 // 排序选项

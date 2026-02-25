@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Image, Swiper, SwiperItem } from '@tarojs/components';
 import Taro from '@tarojs/taro';
-import { Hotel, RoomType, getHotel } from '../../../../shared/api';
+import { Hotel, RoomType, getHotel } from '../../services/unifiedApi';
 import Calendar from '../../components/Calendar';
 import './detail.css';
 
