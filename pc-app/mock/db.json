@@ -31,6 +31,22 @@
       "role": "merchant",
       "displayName": "ranhao",
       "merchantName": "张浩然酒店"
+    },
+    {
+      "id": 5,
+      "email": "zhr@qq.com",
+      "password": "6670675",
+      "role": "admin",
+      "displayName": "zhr",
+      "merchantName": null
+    },
+    {
+      "id": 6,
+      "email": "cx@qq.com",
+      "password": "6670675",
+      "role": "merchant",
+      "displayName": "cx",
+      "merchantName": "晨曦大酒店"
     }
   ],
   "hotels": [
@@ -84,6 +100,23 @@
       "status": "approved",
       "rejectReason": "",
       "updatedAt": 1771990351649
+    },
+    {
+      "id": 4,
+      "name": "晨曦大酒店",
+      "city": "上海",
+      "address": "华东理工大学",
+      "phone": "",
+      "starLevel": "高档型 / 4 星",
+      "roomType": "大床房",
+      "price": 666,
+      "openingDate": "2026-02-06",
+      "nearbyHighlights": "",
+      "promotionInfo": "",
+      "merchantId": 6,
+      "status": "pending",
+      "rejectReason": "",
+      "updatedAt": 1772008879802
     }
   ]
 }
