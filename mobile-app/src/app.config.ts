@@ -1,0 +1,14 @@
+export default defineAppConfig({
+  pages: [
+    'pages/index/index',
+    'pages/list/list',
+    'pages/detail/detail',
+    'pages/search/search'
+  ],
+  window: {
+    backgroundTextStyle: 'light',
+    navigationBarBackgroundColor: '#fff',
+    navigationBarTitleText: '易宿酒店',
+    navigationBarTextStyle: 'black'
+  }
+})

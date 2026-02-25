@@ -350,6 +350,38 @@ app.patch('/api/hotels/:id/status', (req, res) => {
     return res.json({ success: true, hotel: sanitizeHotel(db.hotels[index]) });
 });
 
+// ---------- Public hotel APIs for C-end (mobile) ----------
+// 这些接口不需要登录，只返回已发布（approved）的酒店数据，供移动端 C 端使用
+
+// GET /api/public/hotels 公开酒店列表
+app.get('/api/public/hotels', (req, res) => {
+    const db = readDb();
+    let hotels = db.hotels || [];
+
+    // 仅对外暴露已发布的酒店
+    hotels = hotels
+        .filter((h) => h.status === 'approved')
+        .slice()
+        .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
+        .map(sanitizeHotel);
+
+    return res.json({ success: true, hotels });
+});
+
+// GET /api/public/hotels/:id 公开酒店详情
+app.get('/api/public/hotels/:id', (req, res) => {
+    const id = Number(req.params.id);
+    const db = readDb();
+    const hotels = db.hotels || [];
+
+    const hotel = hotels.find((h) => h.id === id && h.status === 'approved');
+    if (!hotel) {
+        return res.status(404).json({ message: '酒店不存在或未发布' });
+    }
+
+    return res.json({ success: true, hotel: sanitizeHotel(hotel) });
+});
+
 app.listen(PORT, () => {
     console.log(`Mock auth server is running at http://localhost:${PORT}`);
     console.log('DB file:', DB_PATH);
