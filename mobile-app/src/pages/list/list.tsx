@@ -32,12 +32,12 @@ const ListPage: React.FC = () => {
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  
+
   // 筛选条件
   const DEFAULT_PRICE_RANGE: [number, number] = [0, 1000]; // 扩大默认价格范围以显示更多酒店
   const [filters, setFilters] = useState({
     priceRange: DEFAULT_PRICE_RANGE as [number, number],
-    starRating: [3] as number[], // 默认3星，改为数组支持多选
+    starRating: [] as number[], // 默认为不限星级（空数组）
     sortBy: 'recommend' as 'recommend' | 'price_asc' | 'price_desc' | 'rating_desc' | 'distance_asc' | 'star_high',
   });
 
@@ -52,7 +52,8 @@ const ListPage: React.FC = () => {
   const [showPriceModal, setShowPriceModal] = useState(false);
   const [draftPriceRange, setDraftPriceRange] = useState<[number, number]>(filters.priceRange);
   const [draftStarRating, setDraftStarRating] = useState<number[]>(filters.starRating);
-  
+  const [selectedPriceOption, setSelectedPriceOption] = useState<number | null>(null);
+
   // 导航栏和伪窗口状态
   const [showNavModal, setShowNavModal] = useState(false);
   const [location, setLocation] = useState({
@@ -65,7 +66,7 @@ const ListPage: React.FC = () => {
   const [roomCount, setRoomCount] = useState(1);
   const [adultCount, setAdultCount] = useState(2);
   const [childCount, setChildCount] = useState(0);
-  
+
   // 子模态窗口状态
   const [showCityModal, setShowCityModal] = useState(false);
   const [showDateModal, setShowDateModal] = useState(false);
@@ -73,10 +74,10 @@ const ListPage: React.FC = () => {
   const [showSortModal, setShowSortModal] = useState(false);
   const [showDistanceModal, setShowDistanceModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
-  
+
   // 日历组件状态
   const [showCalendar, setShowCalendar] = useState(false);
-  
+
   // 排序选项 - 对应api.ts中的排序参数
   const sortModalOptions = [
     { id: 'smart', label: '智能排序', value: 'recommend' },
@@ -86,9 +87,9 @@ const ListPage: React.FC = () => {
     { id: 'star_high', label: '高星优先', value: 'star_high' },
     { id: 'distance', label: '直线距离', value: 'distance_asc' },
   ];
-  
+
   const [selectedSort, setSelectedSort] = useState('recommend');
-  
+
   // 搜索参数（从首页传递）
   const [searchParams, setSearchParams] = useState<HotelQueryParams>({});
 
@@ -104,7 +105,7 @@ const ListPage: React.FC = () => {
       const params = currentPage.options;
       const newSearchParams: HotelQueryParams = {};
       let initialPriceRange: [number, number] = DEFAULT_PRICE_RANGE;
-      
+
       if (params.city) {
         // 处理从首页传过来的中文城市名（URLSearchParams 会进行编码）
         try {
@@ -125,15 +126,22 @@ const ListPage: React.FC = () => {
         newSearchParams.checkOut = params.checkOut;
         setCheckOutDate(params.checkOut);
       }
-      if (params.minPrice || params.maxPrice) {
-        const min = params.minPrice ? Number(params.minPrice) : DEFAULT_PRICE_RANGE[0];
-        const max = params.maxPrice ? Number(params.maxPrice) : DEFAULT_PRICE_RANGE[1];
+      if (params.minPrice) {
+        const min = Number(params.minPrice);
+        // 如果有 maxPrice，用它；否则如果 min >= 500（用户选择的是"500以上"），则不限制最大价格
+        // PRICE_MAX=600 代表滑块的"500以上"档位
+        const max = params.maxPrice
+          ? Number(params.maxPrice)
+          : (min >= 500 ? PRICE_MAX : DEFAULT_PRICE_RANGE[1]);
         initialPriceRange = [min, max];
+      } else if (params.maxPrice) {
+        // 只有 maxPrice 的情况
+        initialPriceRange = [0, Number(params.maxPrice)];
       }
       if (params.sort) newSearchParams.sort = params.sort as any;
-      
+
       // 处理星级参数（可能为数组或逗号分隔的字符串）
-      let initialStarRating: number[] = [3]; // 默认值
+      let initialStarRating: number[] = []; // 默认不限（空数组）
       if (params.starRating) {
         if (Array.isArray(params.starRating)) {
           // 如果是数组，转换为数字数组
@@ -148,7 +156,7 @@ const ListPage: React.FC = () => {
           }
         }
       }
-      
+
       // 计算住几晚
       if (params.checkIn && params.checkOut) {
         const inDate = new Date(params.checkIn);
@@ -157,12 +165,12 @@ const ListPage: React.FC = () => {
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         setNights(diffDays);
       }
-      
+
       setSearchParams(newSearchParams);
       setFilters(prev => ({ ...prev, priceRange: initialPriceRange, starRating: initialStarRating }));
       setDraftPriceRange(initialPriceRange);
       setDraftStarRating(initialStarRating);
-      
+
       // 更新页面标题
       if (newSearchParams.city) {
         Taro.setNavigationBarTitle({
@@ -171,10 +179,15 @@ const ListPage: React.FC = () => {
       }
 
       // 直接用解析后的参数加载，避免 state 尚未落盘就请求
-      loadHotels(true, newSearchParams, { ...filters, priceRange: initialPriceRange, starRating: initialStarRating });
+      const initialFilters = {
+        priceRange: initialPriceRange,
+        starRating: initialStarRating,
+        sortBy: 'recommend' as const,
+      };
+      loadHotels(true, newSearchParams, initialFilters);
       return;
     }
-    
+
     // 加载初始数据
     loadHotels(true);
   }, []);
@@ -186,10 +199,10 @@ const ListPage: React.FC = () => {
     filtersOverride?: typeof filters
   ) => {
     if (loading) return;
-    
+
     setLoading(true);
     const currentPage = isRefresh ? 1 : page;
-    
+
     try {
       const effectiveSearch = searchOverride || searchParams;
       const effectiveFilters = filtersOverride || filters;
@@ -198,21 +211,27 @@ const ListPage: React.FC = () => {
         page: currentPage,
         limit: 5,
       };
-      
-      // 应用筛选条件
-      queryParams.minPrice = effectiveFilters.priceRange[0];
-      queryParams.maxPrice = effectiveFilters.priceRange[1];
+
+      // 应用筛选条件 - 只有当价格不是默认值时才传递价格参数
+      if (effectiveFilters.priceRange[0] !== 0 || effectiveFilters.priceRange[1] !== 1000) {
+        queryParams.minPrice = effectiveFilters.priceRange[0];
+        // 如果最大值是 PRICE_MAX（600，代表500以上），则不限制最大价格
+        if (effectiveFilters.priceRange[1] < PRICE_MAX) {
+          queryParams.maxPrice = effectiveFilters.priceRange[1];
+        }
+      }
+      // 只有当用户选择了星级时才传递星级筛选（空数组表示不限）
       if (effectiveFilters.starRating.length > 0) {
         queryParams.starRating = effectiveFilters.starRating;
       }
-      
+
       // 应用排序
       if (effectiveFilters.sortBy !== 'recommend') {
         queryParams.sort = effectiveFilters.sortBy;
       }
-      
+
       const data = await getHotels(queryParams);
-      
+
       if (isRefresh) {
         setHotels(data);
         setPage(1);
@@ -220,11 +239,11 @@ const ListPage: React.FC = () => {
         setHotels(prev => [...prev, ...data]);
         setPage(currentPage + 1);
       }
-      
+
       // 模拟是否有更多数据
       setHasMore(data.length === 5);
       setTotal(prev => isRefresh ? data.length : prev + data.length);
-      
+
     } catch (error) {
       console.error('加载酒店数据失败:', error);
       Taro.showToast({
@@ -253,12 +272,12 @@ const ListPage: React.FC = () => {
   const resetFilters = () => {
     setFilters({
       priceRange: DEFAULT_PRICE_RANGE,
-      starRating: [3], // 重置为3星数组，与默认值保持一致
+      starRating: [], // 重置为不限星级（空数组）
       sortBy: 'recommend',
     });
     setSelectedSort('recommend');
     setDraftPriceRange(DEFAULT_PRICE_RANGE);
-    setDraftStarRating([3]); // 重置为3星数组，与默认值保持一致
+    setDraftStarRating([]); // 重置为不限星级（空数组）
     loadHotels(true);
   };
 
@@ -276,8 +295,17 @@ const ListPage: React.FC = () => {
 
   // 跳转到详情页
   const handleHotelClick = (hotel: Hotel) => {
+    const params = {
+      id: hotel.id.toString(),
+      checkIn: checkInDate,
+      checkOut: checkOutDate,
+      roomCount: roomCount.toString(),
+      adultCount: adultCount.toString(),
+      childCount: childCount.toString(),
+    };
+
     Taro.navigateTo({
-      url: `/pages/detail/detail?id=${hotel.id}`,
+      url: `/pages/detail/detail?${new URLSearchParams(params).toString()}`,
     });
   };
 
@@ -297,19 +325,19 @@ const ListPage: React.FC = () => {
     setDraftPriceRange(prev => [prev[0] > v ? v : prev[0], v]);
   };
   const applyDraftPrice = () => {
-    setFilters(prev => ({ 
-      ...prev, 
+    const newFilters = {
       priceRange: draftPriceRange,
-      starRating: draftStarRating 
+      starRating: draftStarRating,
+      sortBy: filters.sortBy,
+    };
+    setFilters(prev => ({
+      ...prev,
+      ...newFilters
     }));
     setShowPriceModal(false);
-    loadHotels(true, undefined, { 
-      ...filters, 
-      priceRange: draftPriceRange,
-      starRating: draftStarRating 
-    });
+    loadHotels(true, undefined, newFilters);
   };
-  
+
   // 导航栏和伪窗口处理函数
   // 获取当前位置
   const getCurrentLocation = () => {
@@ -373,7 +401,7 @@ const ListPage: React.FC = () => {
       const [startDate, endDate] = value;
       setCheckInDate(startDate);
       setCheckOutDate(endDate);
-      
+
       // 计算住几晚
       const inDate = new Date(startDate);
       const outDate = new Date(endDate);
@@ -390,7 +418,7 @@ const ListPage: React.FC = () => {
     // 这里可以添加更新搜索参数的逻辑
     // 例如：重新加载酒店数据
   };
-  
+
   // 星级显示文本
   const starText = useMemo(() => {
     if (filters.starRating.length === 0) {
@@ -403,7 +431,7 @@ const ListPage: React.FC = () => {
     // 多星级显示为"多选"
     return '多选';
   }, [filters.starRating]);
-  
+
   // 排序显示文本
   const sortText = sortOptions.find(opt => opt.value === filters.sortBy)?.label || '推荐排序';
 
@@ -448,19 +476,26 @@ const ListPage: React.FC = () => {
               {sortModalOptions.find(opt => opt.value === selectedSort)?.label || '智能排序'}▼
             </Text>
           </View>
-          
+
           <View className="filter-item" onClick={() => setShowDistanceModal(true)}>
             <Text className="filter-label">位置距离▼</Text>
           </View>
-          
-          <View className="filter-item" onClick={() => { 
-            setDraftPriceRange(filters.priceRange); 
+
+          <View className="filter-item" onClick={() => {
+            setDraftPriceRange(filters.priceRange);
             setDraftStarRating(filters.starRating);
-            setShowPriceModal(true); 
+            // 根据当前价格范围确定选中的快捷选项
+            const quickIndex = priceQuickOptions.findIndex(
+              opt => opt.value[0] === filters.priceRange[0] &&
+                     (opt.value[1] === filters.priceRange[1] ||
+                      (filters.priceRange[1] >= 600 && opt.value[1] === 600))
+            );
+            setSelectedPriceOption(quickIndex >= 0 ? quickIndex : null);
+            setShowPriceModal(true);
           }}>
             <Text className="filter-label">价格/星级▼</Text>
           </View>
-          
+
           <View className="filter-item" onClick={() => setShowFilterModal(true)}>
             <Text className="filter-label">筛选▼</Text>
           </View>
@@ -515,8 +550,11 @@ const ListPage: React.FC = () => {
                   {priceQuickOptions.map((opt, i) => (
                     <View
                       key={i}
-                      className="modal-quick-btn"
-                      onClick={() => setDraftPriceRange([opt.value[0], opt.value[1]])}
+                      className={`modal-quick-btn ${selectedPriceOption === i ? 'selected' : ''}`}
+                      onClick={() => {
+                        setDraftPriceRange([opt.value[0], opt.value[1]]);
+                        setSelectedPriceOption(i);
+                      }}
                     >
                       <Text>{opt.label}</Text>
                     </View>
@@ -524,7 +562,7 @@ const ListPage: React.FC = () => {
                 </View>
               </View>
               <View className="modal-star-block">
-                <Text className="modal-star-label">星级（可多选）</Text>
+                <Text className="modal-star-label">星级</Text>
                 <View className="modal-star-buttons">
                   {[2, 3, 4, 5].map(star => (
                     <View
@@ -547,11 +585,17 @@ const ListPage: React.FC = () => {
                   ))}
                 </View>
               </View>
-              
-              {/* 确定按钮 */}
-              <View className="price-modal-actions">
-                <View className="price-modal-button" onClick={applyDraftPrice}>
-                  <Text className="price-modal-button-text">确定</Text>
+
+              <View className="modal-button-group">
+                <View className="modal-button clear-button" onClick={() => {
+                  setDraftPriceRange(DEFAULT_PRICE_RANGE);
+                  setDraftStarRating([]);
+                  setSelectedPriceOption(null);
+                }}>
+                  <Text>清除</Text>
+                </View>
+                <View className="modal-button confirm-button" onClick={applyDraftPrice}>
+                  <Text>确定</Text>
                 </View>
               </View>
             </View>
@@ -572,8 +616,8 @@ const ListPage: React.FC = () => {
             </View>
             <View className="sort-modal-body">
               {sortModalOptions.map(option => (
-                <View 
-                  key={option.id} 
+                <View
+                  key={option.id}
                   className="sort-modal-row"
                   onClick={() => {
                     setSelectedSort(option.value);
@@ -589,7 +633,7 @@ const ListPage: React.FC = () => {
                     setShowSortModal(false);
                   }}
                 >
-                  <Text 
+                  <Text
                     className="sort-modal-row-label"
                     style={{
                       fontSize: '24rpx',
@@ -821,7 +865,6 @@ const ListPage: React.FC = () => {
 
       {/* 搜索结果信息 */}
       <View className="results-info">
-        <Text className="results-count">共找到 {total} 家酒店</Text>
         {searchParams.city && (
           <Text className="search-city">搜索城市: {searchParams.city}</Text>
         )}
@@ -875,7 +918,7 @@ const ListPage: React.FC = () => {
 
       {/* 回到顶部按钮 */}
       {hotels.length > 5 && (
-        <View 
+        <View
           className="back-to-top"
           onClick={() => {
             Taro.pageScrollTo({

@@ -69,8 +69,8 @@ const IndexPage: React.FC = () => {
   const [checkInDate, setCheckInDate] = useState('2024-02-20');
   const [checkOutDate, setCheckOutDate] = useState('2024-02-22');
   const [nights, setNights] = useState(2);
-  const [priceRange, setPriceRange] = useState([200, 800]);
-  const [starRating, setStarRating] = useState<number[]>([3]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]); // 默认为不限价格
+  const [starRating, setStarRating] = useState<number[]>([]); // 默认为不限星级（空数组）
   const [nearbyHotels, setNearbyHotels] = useState<Hotel[]>([]);
 
   // 新增状态
@@ -80,7 +80,8 @@ const IndexPage: React.FC = () => {
   const [childCount, setChildCount] = useState(0);
   const [showPriceStarModal, setShowPriceStarModal] = useState(false);
   const [selectedPriceOption, setSelectedPriceOption] = useState<number | null>(null);
-  
+  const [showRoomModal, setShowRoomModal] = useState(false);
+
   // 日历组件状态
   const [showCalendar, setShowCalendar] = useState(false);
   const [calendarMode, setCalendarMode] = useState<'range' | 'single'>('range');
@@ -117,7 +118,7 @@ const IndexPage: React.FC = () => {
         outDate.setDate(outDate.getDate() + 1);
         const outDateStr = outDate.toISOString().split('T')[0];
         setCheckOutDate(outDateStr);
-        
+
         // 计算住几晚
         const diffTime = Math.abs(outDate.getTime() - inDate.getTime());
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -197,19 +198,56 @@ const IndexPage: React.FC = () => {
     });
   };
 
+  // 处理酒店点击，跳转到详情页
+  const handleHotelClick = (hotel: Hotel) => {
+    const params = {
+      id: hotel.id.toString(),
+      checkIn: checkInDate,
+      checkOut: checkOutDate,
+      roomCount: roomCount.toString(),
+      adultCount: adultCount.toString(),
+      childCount: childCount.toString(),
+    };
+
+    Taro.navigateTo({
+      url: `/pages/detail/detail?${new URLSearchParams(params).toString()}`,
+    });
+  };
+
   // 执行搜索
   const handleSearch = () => {
     const params: HotelQueryParams = {
       city: location.city,
       checkIn: checkInDate,
       checkOut: checkOutDate,
-      minPrice: priceRange[0],
-      maxPrice: priceRange[1],
-      starRating: starRating.length > 0 ? starRating : undefined,
     };
 
+    // 只有当价格范围不是默认值[0,1000]时才传递价格筛选
+    if (priceRange[0] !== 0 || priceRange[1] !== 1000) {
+      params.minPrice = priceRange[0];
+      // 如果最大值是 600（代表500以上），则不限制最大价格
+      if (priceRange[1] < PRICE_MAX) {
+        params.maxPrice = priceRange[1];
+      }
+    }
+
+    // 只有当用户选择了星级时才传递星级筛选（空数组表示不限）
+    if (starRating.length > 0) {
+      // 将数组转换为逗号分隔的字符串，如 "4,5"
+      params.starRating = starRating.join(',') as any;
+    }
+
+    // 构建URL参数
+    const urlParams = new URLSearchParams();
+    if (params.city) urlParams.set('city', params.city);
+    if (params.checkIn) urlParams.set('checkIn', params.checkIn);
+    if (params.checkOut) urlParams.set('checkOut', params.checkOut);
+    if (params.minPrice !== undefined) urlParams.set('minPrice', String(params.minPrice));
+    if (params.maxPrice !== undefined) urlParams.set('maxPrice', String(params.maxPrice));
+    if (params.starRating) urlParams.set('starRating', String(params.starRating));
+
     Taro.navigateTo({
-      url: `/pages/list/list?${new URLSearchParams(params as any).toString()}`,
+      url: `/pages/list/list?${urlParams.toString()}`,
     });
   };
 
@@ -264,8 +302,8 @@ const IndexPage: React.FC = () => {
 
   // 清除价格和星级筛选
   const handleClearPriceStar = () => {
-    setPriceRange([200, 800]); // 重置为默认值
-    setStarRating([3]); // 重置为默认值
+    setPriceRange([0, 1000]); // 重置为不限价格
+    setStarRating([]); // 重置为不限星级（空数组）
     setSelectedPriceOption(null); // 清除选中的快捷价格选项
   };
 
@@ -280,7 +318,7 @@ const IndexPage: React.FC = () => {
       const [startDate, endDate] = value;
       setCheckInDate(startDate);
       setCheckOutDate(endDate);
-      
+
       // 计算住几晚
       const inDate = new Date(startDate);
       const outDate = new Date(endDate);
@@ -304,8 +342,18 @@ const IndexPage: React.FC = () => {
     // 三个北京酒店的ID，可以根据实际情况调整
     const hotelIds = [1, 2, 3]; // 假设的酒店ID
     const hotelId = hotelIds[index % hotelIds.length]; // 循环使用酒店ID
+
+    const params = {
+      id: hotelId.toString(),
+      checkIn: checkInDate,
+      checkOut: checkOutDate,
+      roomCount: roomCount.toString(),
+      adultCount: adultCount.toString(),
+      childCount: childCount.toString(),
+    };
+
     Taro.navigateTo({
-      url: `/pages/detail/detail?id=${hotelId}`,
+      url: `/pages/detail/detail?${new URLSearchParams(params).toString()}`,
     });
   };
 
@@ -402,24 +450,18 @@ const IndexPage: React.FC = () => {
           </View>
 
           <View className="query-row guests-price-row">
-            <View className="guests-block">
+            <View className="guests-block" onClick={() => setShowRoomModal(true)}>
               <View className="guest-item">
                 <Text className="guest-label">房间</Text>
-                <Picker mode="selector" range={['1间', '2间', '3间', '4间', '5间']} value={roomCount - 1} onChange={e => setRoomCount(Number(e.detail.value) + 1)}>
-                  <Text className="guest-value">{roomCount}间</Text>
-                </Picker>
+                <Text className="guest-value">{roomCount}间</Text>
               </View>
               <View className="guest-item">
                 <Text className="guest-label">成人</Text>
-                <Picker mode="selector" range={['1人', '2人', '3人', '4人', '5人', '6人', '7人', '8人', '9人', '10人']} value={adultCount - 1} onChange={e => setAdultCount(Number(e.detail.value) + 1)}>
-                  <Text className="guest-value">{adultCount}人</Text>
-                </Picker>
+                <Text className="guest-value">{adultCount}人</Text>
               </View>
               <View className="guest-item">
                 <Text className="guest-label">儿童</Text>
-                <Picker mode="selector" range={['0人', '1人', '2人', '3人', '4人', '5人']} value={childCount} onChange={e => setChildCount(Number(e.detail.value))}>
-                  <Text className="guest-value">{childCount}人</Text>
-                </Picker>
+                <Text className="guest-value">{childCount}人</Text>
               </View>
             </View>
             <View className="price-star-trigger" onClick={() => setShowPriceStarModal(true)}>
@@ -480,7 +522,11 @@ const IndexPage: React.FC = () => {
 
         <View className="hotels-grid">
           {nearbyHotels.map(hotel => (
-            <NearbyHotelCard key={hotel.id} hotel={hotel} />
+            <NearbyHotelCard
+              key={hotel.id}
+              hotel={hotel}
+              onClick={() => handleHotelClick(hotel)}
+            />
           ))}
         </View>
       </View>
@@ -563,6 +609,64 @@ const IndexPage: React.FC = () => {
                 </View>
                 <View className="modal-button confirm-button" onClick={handleConfirmPriceStar}>
                   <Text>确定</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {/* 房间人数选择模态窗口 */}
+      {showRoomModal && (
+        <View className="room-modal-mask">
+          <View className="room-modal-overlay" onClick={() => setShowRoomModal(false)} />
+          <View className="room-modal-panel">
+            <View className="room-modal-header">
+              <Text className="room-modal-title">房间和人数</Text>
+              <View className="room-modal-close" onClick={() => setShowRoomModal(false)}>
+                <Text>✕</Text>
+              </View>
+            </View>
+            <View className="room-modal-body">
+              <View className="room-control-row">
+                <Text className="room-control-label">房间</Text>
+                <View className="room-control-buttons">
+                  <View className="room-control-button" onClick={() => setRoomCount(Math.max(1, roomCount - 1))}>
+                    <Text>-</Text>
+                  </View>
+                  <Text className="room-control-value">{roomCount}间</Text>
+                  <View className="room-control-button" onClick={() => setRoomCount(roomCount + 1)}>
+                    <Text>+</Text>
+                  </View>
+                </View>
+              </View>
+              <View className="room-control-row">
+                <Text className="room-control-label">成人</Text>
+                <View className="room-control-buttons">
+                  <View className="room-control-button" onClick={() => setAdultCount(Math.max(1, adultCount - 1))}>
+                    <Text>-</Text>
+                  </View>
+                  <Text className="room-control-value">{adultCount}人</Text>
+                  <View className="room-control-button" onClick={() => setAdultCount(adultCount + 1)}>
+                    <Text>+</Text>
+                  </View>
+                </View>
+              </View>
+              <View className="room-control-row">
+                <Text className="room-control-label">儿童</Text>
+                <View className="room-control-buttons">
+                  <View className="room-control-button" onClick={() => setChildCount(Math.max(0, childCount - 1))}>
+                    <Text>-</Text>
+                  </View>
+                  <Text className="room-control-value">{childCount}人</Text>
+                  <View className="room-control-button" onClick={() => setChildCount(childCount + 1)}>
+                    <Text>+</Text>
+                  </View>
+                </View>
+              </View>
+              <View className="room-modal-actions">
+                <View className="room-modal-button" onClick={() => setShowRoomModal(false)}>
+                  <Text className="room-modal-button-text">确定</Text>
                 </View>
               </View>
             </View>

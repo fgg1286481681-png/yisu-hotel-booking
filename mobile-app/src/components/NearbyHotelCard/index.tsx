@@ -9,13 +9,14 @@ type NearbyHotelCardProps = {
     price: number;
     city: string;
   };
+  onClick?: () => void;
 };
 
-const NearbyHotelCard: React.FC<NearbyHotelCardProps> = ({ hotel }) => {
+const NearbyHotelCard: React.FC<NearbyHotelCardProps> = ({ hotel, onClick }) => {
   const randomDistanceKm = Math.floor(Math.random() * 10) + 1;
 
   return (
-    <View className="hotel-card">
+    <View className="hotel-card" onClick={onClick}>
       <Image className="hotel-image" src={hotel.image} mode="aspectFill" />
       <View className="hotel-info">
         <Text className="hotel-name" numberOfLines={1}>

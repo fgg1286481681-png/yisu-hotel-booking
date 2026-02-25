@@ -67,8 +67,8 @@
     transform: translateY(-20rpx);
   }
   to {
-    height: 50vh;
-    min-height: 400rpx;
+    height: 56vh;
+    min-height: 500rpx;
     opacity: 1;
     transform: translateY(0);
   }
@@ -95,13 +95,13 @@
 
 .price-star-modal-panel {
   position: fixed;
-  top: 280rpx; /* 导航栏高度 + 筛选栏高度 */
+  top: 240rpx; /* 导航栏高度 + 筛选栏高度 */
   left: 0;
   right: 0;
   height: 0;
   background: #fff;
-  border-radius: 0 0 24rpx 24rpx;
-  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.15);
+  border-radius: 24rpx 24rpx 0 0;
+  box-shadow: 0 -8rpx 32rpx rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -124,7 +124,7 @@
 
 .price-star-modal-close {
   width: 64rpx;
-  height: 64rpx;
+  height: 68rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -186,6 +186,12 @@
   color: #333;
 }
 
+.modal-quick-btn.selected {
+  background: #1890ff;
+  color: #fff;
+  border: 2rpx solid #1890ff;
+}
+
 .modal-quick-btn:active {
   background: #e6f7ff;
   color: #1890ff;
@@ -219,6 +225,45 @@
 .modal-star-btn.active {
   background: #fff7e6;
   border-color: #faad14;
+}
+
+/* 模态窗口按钮组 */
+.modal-button-group {
+  display: flex;
+  gap: 24rpx;
+  margin-top: 40rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid #eee;
+}
+
+.modal-button {
+  flex: 1;
+  padding: 20rpx 0;
+  border-radius: 12rpx;
+  text-align: center;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.clear-button {
+  background: #f8f9fa;
+  color: #666;
+  border: 2rpx solid #f0f0f0;
+}
+
+.clear-button:active {
+  background: #f0f0f0;
+}
+
+.confirm-button {
+  background: #1890ff;
+  color: #fff;
+  border: 2rpx solid #1890ff;
+}
+
+.confirm-button:active {
+  background: #096dd9;
+  border-color: #096dd9;
 }
 
 /* 筛选按钮 */
@@ -411,18 +456,18 @@
     flex-direction: column;
     gap: 16rpx;
   }
-  
+
   .filter-actions {
     flex-direction: column;
     gap: 16rpx;
   }
-  
+
   .results-info {
     flex-direction: column;
     align-items: flex-start;
     gap: 16rpx;
   }
-  
+
   .hotels-scroll {
     height: calc(100vh - 500rpx);
   }
