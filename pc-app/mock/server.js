@@ -367,9 +367,16 @@ app.get('/api/public/hotels', (req, res) => {
     const db = readDb();
     let hotels = db.hotels || [];
 
+    const { city } = req.query || {};
+
     // 仅对外暴露已发布的酒店
     hotels = hotels
         .filter((h) => h.status === 'approved')
+        // 如传入 city 参数，则按城市过滤
+        .filter((h) => {
+            if (!city) return true;
+            return h.city === city;
+        })
         .slice()
         .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
         .map(sanitizeHotel);

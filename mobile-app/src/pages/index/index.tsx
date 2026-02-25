@@ -89,9 +89,8 @@ const IndexPage: React.FC = () => {
   // 国内/国外切换时使用对应城市列表
   const cities = useMemo(() => (isDomestic ? domesticCities : foreignCities), [isDomestic]);
 
-  // 初始化数据
+  // 初始化数据（获取定位）
   useEffect(() => {
-    loadInitialData();
     getCurrentLocation();
   }, []);
 
@@ -127,14 +126,21 @@ const IndexPage: React.FC = () => {
     }
   }, [isHourlyRoom]);
 
-  const loadInitialData = async () => {
-    try {
-      const hotels = await getHotels({ city: '北京', limit: 6 });
-      setNearbyHotels(hotels);
-    } catch (error) {
-      console.error('加载数据失败:', error);
-    }
-  };
+  // 根据当前选中的城市加载附近酒店
+  useEffect(() => {
+    const loadNearbyHotels = async () => {
+      try {
+        // 先拿到后端 / mock 返回的所有酒店，然后在前端再按城市筛一遍，保证只显示当前城市
+        const hotels = await getHotels();
+        const filtered = hotels.filter((hotel: any) => hotel.city === location.city);
+        setNearbyHotels(filtered.slice(0, 6)); // 只展示前 6 个
+      } catch (error) {
+        console.error('加载附近酒店失败:', error);
+      }
+    };
+
+    loadNearbyHotels();
+  }, [location.city]);
 
   // 获取当前位置
   const getCurrentLocation = () => {

@@ -17,6 +17,7 @@ export interface RoomType {
 // 酒店接口定义
 export interface Hotel {
   id: number;
+  brand?: '易宿' | '爱住'; // 酒店品牌
   name: string;
   address: string;
   price: number; // 最低价格
@@ -409,6 +410,7 @@ const mockHotels: Hotel[] = [
   },
   {
     id: 8,
+    brand: '易宿',
     name: '三亚亚龙湾度假酒店',
     address: '三亚市亚龙湾国家旅游度假区',
     price: 980,
@@ -572,6 +574,7 @@ const mockHotels: Hotel[] = [
   // 新增北京酒店
   {
     id: 11,
+    brand: '易宿',
     name: '北京国贸大酒店',
     address: '北京市朝阳区建国门外大街',
     price: 850,
@@ -580,7 +583,37 @@ const mockHotels: Hotel[] = [
     city: '北京',
     facilities: ['免费WiFi', '游泳池', '健身房', '水疗中心', '餐厅', '会议室'],
     starRating: 5,
-    distance: 3.2
+    distance: 3.2,
+    roomTypes: [
+      {
+        id: 1,
+        name: '商务大床房',
+        description: '位于高层楼层，适合商务出行，配备办公桌',
+        image: 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&auto=format&fit=crop',
+        tags: ['城市景观', '办公桌', '免费WiFi'],
+        price: 850,
+        originalPrice: 980,
+        area: '32㎡',
+        bedType: '大床',
+        maxOccupancy: 2,
+        breakfastIncluded: true,
+        cancellationPolicy: '入住前24小时可免费取消'
+      },
+      {
+        id: 2,
+        name: '行政套房',
+        description: '享有行政酒廊礼遇，配备独立客厅和工作区',
+        image: 'https://images.unsplash.com/photo-1521783593447-5702f2c0c8f2?w=800&auto=format&fit=crop',
+        tags: ['城市景观', '客厅', '迷你吧'],
+        price: 1180,
+        originalPrice: 1380,
+        area: '60㎡',
+        bedType: '大床',
+        maxOccupancy: 3,
+        breakfastIncluded: true,
+        cancellationPolicy: '入住前48小时可免费取消'
+      }
+    ]
   },
   {
     id: 12,
@@ -592,7 +625,37 @@ const mockHotels: Hotel[] = [
     city: '北京',
     facilities: ['免费WiFi', '停车场', '健身房', '餐厅', '商务中心'],
     starRating: 4,
-    distance: 2.8
+    distance: 2.8,
+    roomTypes: [
+      {
+        id: 1,
+        name: '高级大床房',
+        description: '温馨舒适的大床房，临近王府井商业区',
+        image: 'https://images.unsplash.com/photo-1501117716987-c8e1ecb2108a?w=800&auto=format&fit=crop',
+        tags: ['城市景观', '禁烟', '免费WiFi'],
+        price: 720,
+        originalPrice: 820,
+        area: '28㎡',
+        bedType: '大床',
+        maxOccupancy: 2,
+        breakfastIncluded: false,
+        cancellationPolicy: '入住前24小时可免费取消'
+      },
+      {
+        id: 2,
+        name: '豪华双床房',
+        description: '配备两张单人床，适合家庭或朋友出行',
+        image: 'https://images.unsplash.com/photo-1505691723518-36a5ac3be353?w=800&auto=format&fit=crop',
+        tags: ['城市景观', '双床', '免费WiFi'],
+        price: 780,
+        originalPrice: 880,
+        area: '30㎡',
+        bedType: '双床',
+        maxOccupancy: 2,
+        breakfastIncluded: true,
+        cancellationPolicy: '入住前24小时可免费取消'
+      }
+    ]
   },
   {
     id: 13,
@@ -604,7 +667,37 @@ const mockHotels: Hotel[] = [
     city: '北京',
     facilities: ['免费WiFi', '游泳池', '健身房', '水疗中心', '餐厅'],
     starRating: 5,
-    distance: 5.1
+    distance: 5.1,
+    roomTypes: [
+      {
+        id: 1,
+        name: '园景大床房',
+        description: '可俯瞰紫竹院公园景观，环境安静',
+        image: 'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=800&auto=format&fit=crop',
+        tags: ['园景', '浴缸', '免费WiFi'],
+        price: 680,
+        originalPrice: 880,
+        area: '36㎡',
+        bedType: '大床',
+        maxOccupancy: 2,
+        breakfastIncluded: true,
+        cancellationPolicy: '入住前48小时可免费取消'
+      },
+      {
+        id: 2,
+        name: '行政楼层房',
+        description: '享行政楼层礼遇，含双早与下午茶',
+        image: 'https://images.unsplash.com/photo-1519710884009-4803fa4edc6d?w=800&auto=format&fit=crop',
+        tags: ['园景', '行政酒廊', '免费WiFi'],
+        price: 880,
+        originalPrice: 1080,
+        area: '38㎡',
+        bedType: '大床',
+        maxOccupancy: 2,
+        breakfastIncluded: true,
+        cancellationPolicy: '入住前72小时可免费取消'
+      }
+    ]
   },
   {
     id: 14,
@@ -616,7 +709,37 @@ const mockHotels: Hotel[] = [
     city: '北京',
     facilities: ['免费WiFi', '停车场', '餐厅', '会议室'],
     starRating: 4,
-    distance: 4.5
+    distance: 4.5,
+    roomTypes: [
+      {
+        id: 1,
+        name: '标准双床房',
+        description: '经典双床房，性价比高，适合会展出行',
+        image: 'https://images.unsplash.com/photo-1496412705862-e0088f16f791?w=800&auto=format&fit=crop',
+        tags: ['城市景观', '双床', '免费WiFi'],
+        price: 550,
+        originalPrice: 650,
+        area: '26㎡',
+        bedType: '双床',
+        maxOccupancy: 2,
+        breakfastIncluded: false,
+        cancellationPolicy: '入住前24小时可免费取消'
+      },
+      {
+        id: 2,
+        name: '豪华大床房',
+        description: '面向东三环景观，房间空间更大',
+        image: 'https://images.unsplash.com/photo-1501117716987-c8e1ecb2108a?w=800&auto=format&fit=crop',
+        tags: ['城市景观', '大床', '免费WiFi'],
+        price: 620,
+        originalPrice: 720,
+        area: '30㎡',
+        bedType: '大床',
+        maxOccupancy: 2,
+        breakfastIncluded: true,
+        cancellationPolicy: '入住前24小时可免费取消'
+      }
+    ]
   },
   {
     id: 15,
@@ -628,7 +751,37 @@ const mockHotels: Hotel[] = [
     city: '北京',
     facilities: ['免费WiFi', '游泳池', '健身房', '水疗中心', '餐厅', '商务中心'],
     starRating: 5,
-    distance: 3.7
+    distance: 3.7,
+    roomTypes: [
+      {
+        id: 1,
+        name: '金融街景观房',
+        description: '可俯瞰金融街城市景观，安静舒适',
+        image: 'https://images.unsplash.com/photo-1496417263034-38ec4f0b665a?w=800&auto=format&fit=crop',
+        tags: ['城市景观', '浴缸', '免费WiFi'],
+        price: 780,
+        originalPrice: 980,
+        area: '34㎡',
+        bedType: '大床',
+        maxOccupancy: 2,
+        breakfastIncluded: true,
+        cancellationPolicy: '入住前48小时可免费取消'
+      },
+      {
+        id: 2,
+        name: '行政套房',
+        description: '适合高端商务客户，含行政酒廊权益',
+        image: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?w=800&auto=format&fit=crop',
+        tags: ['行政酒廊', '客厅', '迷你吧'],
+        price: 1180,
+        originalPrice: 1480,
+        area: '65㎡',
+        bedType: '大床',
+        maxOccupancy: 3,
+        breakfastIncluded: true,
+        cancellationPolicy: '入住前72小时可免费取消'
+      }
+    ]
   },
   {
     id: 16,
@@ -640,7 +793,37 @@ const mockHotels: Hotel[] = [
     city: '北京',
     facilities: ['免费WiFi', '游泳池', '健身房', '水疗中心', '餐厅', '行政酒廊'],
     starRating: 5,
-    distance: 2.9
+    distance: 2.9,
+    roomTypes: [
+      {
+        id: 1,
+        name: '豪华城景房',
+        description: '位于高层，可俯瞰国贸核心区夜景',
+        image: 'https://images.unsplash.com/photo-1520256862855-398228c41684?w=800&auto=format&fit=crop',
+        tags: ['城市景观', '浴缸', '免费WiFi'],
+        price: 950,
+        originalPrice: 1180,
+        area: '40㎡',
+        bedType: '大床',
+        maxOccupancy: 2,
+        breakfastIncluded: true,
+        cancellationPolicy: '入住前72小时可免费取消'
+      },
+      {
+        id: 2,
+        name: '豪华套房',
+        description: '一室一厅布局，适合长住与商务会客',
+        image: 'https://images.unsplash.com/photo-1501117716987-c8e1ecb2108a?w=800&auto=format&fit=crop',
+        tags: ['客厅', '浴缸', '行政酒廊'],
+        price: 1380,
+        originalPrice: 1680,
+        area: '70㎡',
+        bedType: '大床',
+        maxOccupancy: 3,
+        breakfastIncluded: true,
+        cancellationPolicy: '入住前72小时可免费取消'
+      }
+    ]
   },
   {
     id: 17,
@@ -652,7 +835,37 @@ const mockHotels: Hotel[] = [
     city: '北京',
     facilities: ['免费WiFi', '停车场', '健身房', '餐厅', '会议室'],
     starRating: 4,
-    distance: 4.8
+    distance: 4.8,
+    roomTypes: [
+      {
+        id: 1,
+        name: '标准大床房',
+        description: '靠近使馆区，适合商务与旅游出行',
+        image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&auto=format&fit=crop',
+        tags: ['城市景观', '大床', '免费WiFi'],
+        price: 620,
+        originalPrice: 720,
+        area: '27㎡',
+        bedType: '大床',
+        maxOccupancy: 2,
+        breakfastIncluded: false,
+        cancellationPolicy: '入住前24小时可免费取消'
+      },
+      {
+        id: 2,
+        name: '豪华双床房',
+        description: '空间更大，配备两张单人床',
+        image: 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&auto=format&fit=crop',
+        tags: ['城市景观', '双床', '免费WiFi'],
+        price: 680,
+        originalPrice: 820,
+        area: '30㎡',
+        bedType: '双床',
+        maxOccupancy: 2,
+        breakfastIncluded: true,
+        cancellationPolicy: '入住前24小时可免费取消'
+      }
+    ]
   },
   {
     id: 18,
@@ -664,7 +877,37 @@ const mockHotels: Hotel[] = [
     city: '北京',
     facilities: ['免费WiFi', '健身房', '餐厅', '商务中心'],
     starRating: 4,
-    distance: 2.3
+    distance: 2.3,
+    roomTypes: [
+      {
+        id: 1,
+        name: '经典大床房',
+        description: '靠近王府井步行街，出行便捷',
+        image: 'https://images.unsplash.com/photo-1505691723518-36a5ac3be353?w=800&auto=format&fit=crop',
+        tags: ['城市景观', '禁烟', '免费WiFi'],
+        price: 580,
+        originalPrice: 680,
+        area: '24㎡',
+        bedType: '大床',
+        maxOccupancy: 2,
+        breakfastIncluded: false,
+        cancellationPolicy: '入住前24小时可免费取消'
+      },
+      {
+        id: 2,
+        name: '舒适双床房',
+        description: '适合朋友结伴出行，含双早',
+        image: 'https://images.unsplash.com/photo-1496417263034-38ec4f0b665a?w=800&auto=format&fit=crop',
+        tags: ['城市景观', '双床', '免费WiFi'],
+        price: 630,
+        originalPrice: 730,
+        area: '26㎡',
+        bedType: '双床',
+        maxOccupancy: 2,
+        breakfastIncluded: true,
+        cancellationPolicy: '入住前24小时可免费取消'
+      }
+    ]
   },
   {
     id: 19,
@@ -676,7 +919,37 @@ const mockHotels: Hotel[] = [
     city: '北京',
     facilities: ['免费WiFi', '游泳池', '健身房', '水疗中心', '餐厅'],
     starRating: 5,
-    distance: 3.5
+    distance: 3.5,
+    roomTypes: [
+      {
+        id: 1,
+        name: '豪华大床房',
+        description: '位于中高层，采光好，配备浴缸',
+        image: 'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=800&auto=format&fit=crop',
+        tags: ['城市景观', '浴缸', '免费WiFi'],
+        price: 750,
+        originalPrice: 880,
+        area: '36㎡',
+        bedType: '大床',
+        maxOccupancy: 2,
+        breakfastIncluded: true,
+        cancellationPolicy: '入住前48小时可免费取消'
+      },
+      {
+        id: 2,
+        name: '行政景观房',
+        description: '观景更佳，含行政酒廊与晚间鸡尾酒',
+        image: 'https://images.unsplash.com/photo-1519710884009-4803fa4edc6d?w=800&auto=format&fit=crop',
+        tags: ['行政酒廊', '城市景观', '免费WiFi'],
+        price: 920,
+        originalPrice: 1120,
+        area: '38㎡',
+        bedType: '大床',
+        maxOccupancy: 2,
+        breakfastIncluded: true,
+        cancellationPolicy: '入住前72小时可免费取消'
+      }
+    ]
   },
   {
     id: 20,
@@ -688,7 +961,128 @@ const mockHotels: Hotel[] = [
     city: '北京',
     facilities: ['免费WiFi', '游泳池', '健身房', '水疗中心', '餐厅', '行政酒廊'],
     starRating: 5,
-    distance: 3.0
+    distance: 3.0,
+    roomTypes: [
+      {
+        id: 1,
+        name: '柏悦大床房',
+        description: '现代设计风格客房，采光充足',
+        image: 'https://images.unsplash.com/photo-1505691723518-36a5ac3be353?w=800&auto=format&fit=crop',
+        tags: ['城市景观', '浴缸', '免费WiFi'],
+        price: 880,
+        originalPrice: 1080,
+        area: '38㎡',
+        bedType: '大床',
+        maxOccupancy: 2,
+        breakfastIncluded: true,
+        cancellationPolicy: '入住前48小时可免费取消'
+      },
+      {
+        id: 2,
+        name: '柏悦套房',
+        description: '一房一厅布局，提供更宽敞的起居空间',
+        image: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?w=800&auto=format&fit=crop',
+        tags: ['客厅', '浴缸', '行政酒廊'],
+        price: 1380,
+        originalPrice: 1680,
+        area: '72㎡',
+        bedType: '大床',
+        maxOccupancy: 3,
+        breakfastIncluded: true,
+        cancellationPolicy: '入住前72小时可免费取消'
+      }
+    ]
+  },
+  // 爱住品牌示例酒店
+  {
+    id: 21,
+    brand: '爱住',
+    name: '爱住精选酒店（北京国贸店）',
+    address: '北京市朝阳区建国门外大街 12 号',
+    price: 630,
+    rating: 4.5,
+    image: 'https://images.unsplash.com/photo-1505691723518-36a5ac3be353?w=800&auto=format&fit=crop',
+    images: [
+      'https://images.unsplash.com/photo-1505691723518-36a5ac3be353?w=800&auto=format&fit=crop'
+    ],
+    city: '北京',
+    facilities: ['免费WiFi', '停车场', '餐厅', '健身房'],
+    starRating: 4,
+    distance: 3.2,
+    description: '爱住品牌北京商务旗舰店，紧邻国贸商圈与地铁枢纽。',
+    phone: '010-88880001'
+  },
+  {
+    id: 22,
+    brand: '爱住',
+    name: '爱住城市酒店（上海外滩店）',
+    address: '上海市黄浦区外滩中山东一路 66 号',
+    price: 720,
+    rating: 4.6,
+    image: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&auto=format&fit=crop',
+    images: [
+      'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&auto=format&fit=crop'
+    ],
+    city: '上海',
+    facilities: ['免费WiFi', '江景房', '餐厅', '商务中心'],
+    starRating: 4,
+    distance: 2.1,
+    description: '坐拥外滩夜景的爱住品牌城市酒店，适合商务与度假。',
+    phone: '021-88880002'
+  },
+  {
+    id: 23,
+    brand: '爱住',
+    name: '爱住轻居（广州珠江新城店）',
+    address: '广州市天河区珠江新城华夏路 9 号',
+    price: 480,
+    rating: 4.3,
+    image: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&auto=format&fit=crop',
+    images: [
+      'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&auto=format&fit=crop'
+    ],
+    city: '广州',
+    facilities: ['免费WiFi', '停车场', '自助洗衣', '简餐吧'],
+    starRating: 3,
+    distance: 2.4,
+    description: '主打年轻客群的爱住轻居品牌店，步行可达珠江新城核心区。',
+    phone: '020-88880003'
+  },
+  {
+    id: 24,
+    brand: '爱住',
+    name: '爱住度假酒店（成都青城山店）',
+    address: '成都市都江堰市青城山风景区旁',
+    price: 560,
+    rating: 4.7,
+    image: 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&auto=format&fit=crop',
+    images: [
+      'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&auto=format&fit=crop'
+    ],
+    city: '成都',
+    facilities: ['免费WiFi', '温泉', '花园', '餐厅'],
+    starRating: 4,
+    distance: 10.5,
+    description: '依山傍水的爱住度假酒店，提供温泉与花园景观客房。',
+    phone: '028-88880004'
+  },
+  {
+    id: 25,
+    brand: '爱住',
+    name: '爱住海景酒店（三亚湾店）',
+    address: '三亚市三亚湾海滨路 188 号',
+    price: 920,
+    rating: 4.8,
+    image: 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&auto=format&fit=crop',
+    images: [
+      'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&auto=format&fit=crop'
+    ],
+    city: '三亚',
+    facilities: ['免费WiFi', '私人海滩', '游泳池', '儿童乐园'],
+    starRating: 5,
+    distance: 8.8,
+    description: '面朝大海的爱住品牌海景酒店，适合亲子与情侣度假。',
+    phone: '0898-88880005'
   }
 ];
 
