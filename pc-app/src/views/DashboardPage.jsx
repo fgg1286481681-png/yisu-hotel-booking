@@ -84,7 +84,7 @@ export function DashboardPage() {
                     <Col xs={24} sm={12} md={6}>
                         <Card style={{ minHeight: 120 }}>
                             <Statistic
-                                title={isAdmin ? '待审核酒店' : '待审核我的酒店'}
+                                title={isAdmin ? '待审核酒店' : '我的待审核'}
                                 value={stats.pending}
                                 valueStyle={{ color: '#fa8c16' }}
                             />

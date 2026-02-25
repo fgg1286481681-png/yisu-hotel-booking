@@ -53,6 +53,8 @@ const DetailPage: React.FC = () => {
     );
   }
 
+  const swiperImages = hotel.images && hotel.images.length > 0 ? hotel.images : [hotel.image];
+
   return (
     <View className="detail-page">
       {/* 轮播图区域 */}
@@ -64,15 +66,11 @@ const DetailPage: React.FC = () => {
         autoplay
         circular
       >
-        <SwiperItem>
-          <Image className="swiper-image" src={hotel.image} mode="aspectFill" />
-        </SwiperItem>
-        <SwiperItem>
-          <Image className="swiper-image" src="https://example.com/hotel1-2.jpg" mode="aspectFill" />
-        </SwiperItem>
-        <SwiperItem>
-          <Image className="swiper-image" src="https://example.com/hotel1-3.jpg" mode="aspectFill" />
-        </SwiperItem>
+        {swiperImages.map((img, index) => (
+          <SwiperItem key={index}>
+            <Image className="swiper-image" src={img} mode="aspectFill" />
+          </SwiperItem>
+        ))}
       </Swiper>
 
       {/* 酒店基本信息 */}
@@ -106,10 +104,38 @@ const DetailPage: React.FC = () => {
         </View>
       </View>
 
-      {/* 房型选择区域 - 将在Phase 3中实现 */}
+      {/* 房型选择区域：如果后端返回 roomTypes，则展示房型卡片；否则保留占位说明 */}
       <View className="room-types-section">
         <Text className="section-title">房型选择</Text>
-        <Text className="placeholder-text">房型选择功能将在Phase 3中实现</Text>
+        {hotel.roomTypes && hotel.roomTypes.length > 0 ? (
+          hotel.roomTypes.map((room) => (
+            <View key={room.id} className="room-card">
+              {room.image && (
+                <Image className="room-image" src={room.image} mode="aspectFill" />
+              )}
+              <View className="room-content">
+                <View className="room-header">
+                  <Text className="room-name">{room.name}</Text>
+                  <Text className="room-price">¥{room.price}</Text>
+                </View>
+                {room.description && (
+                  <Text className="room-desc">{room.description}</Text>
+                )}
+                {room.tags && room.tags.length > 0 && (
+                  <View className="room-tags">
+                    {room.tags.map((tag, idx) => (
+                      <Text key={idx} className="room-tag">
+                        {tag}
+                      </Text>
+                    ))}
+                  </View>
+                )}
+              </View>
+            </View>
+          ))
+        ) : (
+          <Text className="placeholder-text">房型选择功能将在后续阶段完善</Text>
+        )}
       </View>
 
       {/* 价格日历区域 - 将在Phase 3中实现 */}

@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Card, Form, Input, Select, Space, Table, Tag, message } from 'antd';
+import { Button, Card, Form, Input, Select, Space, Table, Tag, Upload, Divider, Alert, message } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import { useAuth } from '../modules/auth/AuthContext';
 import { hotelApi } from '../services/hotelApi';
+import { roomTypeApi } from '../services/roomTypeApi';
 
 const CITY_OPTIONS = ['北京', '上海', '广州', '深圳', '杭州', '成都', '重庆', '南京', '武汉', '西安'];
 
@@ -15,10 +17,14 @@ const STAR_LEVEL_OPTIONS = [
 export function HotelFormPage() {
     const { user, token } = useAuth();
     const [form] = Form.useForm();
+    const [roomForm] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [tableLoading, setTableLoading] = useState(false);
     const [hotels, setHotels] = useState([]);
     const [editing, setEditing] = useState(null);
+    const [currentStep, setCurrentStep] = useState(1); // 1: 创建 / 编辑酒店；2: 为当前酒店创建房型
+    const [currentHotel, setCurrentHotel] = useState(null); // 保存刚创建或正在编辑的酒店
+    const [roomImageFiles, setRoomImageFiles] = useState([]); // 当前房型图片 File 列表
 
     const isMerchant = useMemo(() => user?.role === 'merchant', [user]);
 
@@ -42,13 +48,17 @@ export function HotelFormPage() {
     const resetForm = () => {
         setEditing(null);
         form.resetFields();
+        roomForm.resetFields();
+        setCurrentStep(1);
+        setCurrentHotel(null);
+        setRoomImageFiles([]);
     };
 
     const onFinish = async (values) => {
         if (!token) return;
         setLoading(true);
         try {
-            await hotelApi.save(
+            const res = await hotelApi.save(
                 {
                     id: editing?.id,
                     name: values.name,
@@ -64,9 +74,22 @@ export function HotelFormPage() {
                 },
                 token
             );
-            message.success(editing ? '酒店信息已保存并提交审核' : '新酒店已提交审核');
-            resetForm();
-            loadHotels();
+
+            const savedHotel = res?.hotel || res;
+
+            message.success(editing ? '酒店信息已保存并提交审核' : '新酒店已提交审核，下一步请创建房型');
+
+            // 进入第二步：为当前酒店创建房型
+            if (savedHotel && savedHotel.id) {
+                setCurrentHotel(savedHotel);
+                setCurrentStep(2);
+                roomForm.resetFields();
+                setRoomImageFiles([]);
+            } else {
+                // 如果没有返回 id，就只刷新列表并重置
+                resetForm();
+                loadHotels();
+            }
         } catch (e) {
             message.error('保存酒店信息失败');
         } finally {
@@ -76,6 +99,8 @@ export function HotelFormPage() {
 
     const handleEdit = (record) => {
         setEditing(record);
+        setCurrentHotel(record);
+        setCurrentStep(1);
         form.setFieldsValue({
             name: record.name,
             city: record.city,
@@ -88,6 +113,62 @@ export function HotelFormPage() {
             nearbyHighlights: record.nearbyHighlights,
             promotionInfo: record.promotionInfo
         });
+    };
+
+    // 房型图片 Upload （不真正上传，只收集 File）
+    const roomUploadProps = {
+        listType: 'picture-card',
+        fileList: roomImageFiles,
+        beforeUpload: () => false,
+        onChange: ({ fileList }) => {
+            setRoomImageFiles(fileList);
+        }
+    };
+
+    // 第二步：提交房型创建（支持一次一个房型，重复添加）
+    const onRoomFinish = async (values) => {
+        if (!token) return;
+        if (!currentHotel || !currentHotel.id) {
+            message.error('请先完成酒店信息并获取酒店 ID');
+            return;
+        }
+
+        const hotelId = currentHotel.id;
+
+        const dto = {
+            hotelId,
+            name: values.name,
+            description: values.description,
+            tags: values.tags ? values.tags.split(/[，,]/).map((t) => t.trim()).filter(Boolean) : [],
+            price: Number(values.price),
+            originalPrice: values.originalPrice ? Number(values.originalPrice) : undefined,
+            area: values.area,
+            bedType: values.bedType,
+            maxOccupancy: values.maxOccupancy ? Number(values.maxOccupancy) : 2,
+            breakfastIncluded: values.breakfastIncluded === 'yes',
+            cancellationPolicy: values.cancellationPolicy
+        };
+
+        const formData = new FormData();
+        formData.append('roomTypeJson', JSON.stringify(dto));
+
+        roomImageFiles.forEach((fileWrapper, index) => {
+            // antd Upload 的 file 对象里真正的 File 在 originFileObj
+            const realFile = fileWrapper.originFileObj || fileWrapper;
+            formData.append(`images[${index}]`, realFile);
+        });
+
+        setLoading(true);
+        try {
+            await roomTypeApi.create(hotelId, formData, token);
+            message.success('房型已创建');
+            roomForm.resetFields();
+            setRoomImageFiles([]);
+        } catch (e) {
+            message.error('创建房型失败');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const statusTag = (status) => {
@@ -185,6 +266,17 @@ export function HotelFormPage() {
                                 </div>
                             </div>
                         </div>
+
+                        <Alert
+                            type="info"
+                            showIcon
+                            message={
+                                currentStep === 1
+                                    ? '步骤一：先完善酒店基础信息并提交审核，系统会返回酒店 ID。'
+                                    : `步骤二：为酒店【${currentHotel?.name || '当前酒店'}】创建房型，可重复添加多个房型。`
+                            }
+                        />
+                        {/* 步骤 1：酒店创建 / 编辑表单 */}
                         <Form
                             layout="vertical"
                             form={form}
@@ -284,9 +376,133 @@ export function HotelFormPage() {
                                     {editing && (
                                         <Button onClick={resetForm}>取消编辑</Button>
                                     )}
+                                        {currentHotel && currentHotel.id && (
+                                            <Button type="default" onClick={() => setCurrentStep(2)}>
+                                                去创建房型
+                                            </Button>
+                                        )}
                                 </Space>
                             </Form.Item>
                         </Form>
+
+                        {/* 步骤 2：为当前酒店创建房型 */}
+                        {currentHotel && currentHotel.id && (
+                            <>
+                                <Divider />
+                                <Alert
+                                    type="info"
+                                    showIcon
+                                    message="步骤二：为当前酒店创建房型，可重复添加多个房型。"
+                                    style={{ marginBottom: 16 }}
+                                />
+                                <Form
+                                    layout="vertical"
+                                    form={roomForm}
+                                    onFinish={onRoomFinish}
+                                >
+                                    <Form.Item
+                                        label="房型名称"
+                                        name="name"
+                                        rules={[{ required: true, message: '请输入房型名称' }]}
+                                    >
+                                        <Input placeholder="例如：豪华大床房 / 标准双床房" />
+                                    </Form.Item>
+                                    <Form.Item
+                                        label="房型描述（可选）"
+                                        name="description"
+                                    >
+                                        <Input.TextArea
+                                            placeholder="例如：30㎡，大床 1.8m，带浴缸，可住 2 人"
+                                            autoSize={{ minRows: 2, maxRows: 4 }}
+                                        />
+                                    </Form.Item>
+                                    <Form.Item
+                                        label="标签（可选，以逗号或顿号分隔）"
+                                        name="tags"
+                                    >
+                                        <Input placeholder="例如：湖景，浴缸，含早" />
+                                    </Form.Item>
+                                    <Form.Item
+                                        label="销售价格（含税）"
+                                        name="price"
+                                        rules={[{ required: true, message: '请输入销售价格' }]}
+                                    >
+                                        <Input type="number" min={0} placeholder="单位：人民币元" />
+                                    </Form.Item>
+                                    <Form.Item
+                                        label="原价（可选）"
+                                        name="originalPrice"
+                                    >
+                                        <Input type="number" min={0} placeholder="单位：人民币元" />
+                                    </Form.Item>
+                                    <Form.Item
+                                        label="面积（可选）"
+                                        name="area"
+                                    >
+                                        <Input placeholder="例如：30㎡" />
+                                    </Form.Item>
+                                    <Form.Item
+                                        label="床型（可选）"
+                                        name="bedType"
+                                    >
+                                        <Input placeholder="例如：大床 1.8m / 双床 1.2m*2" />
+                                    </Form.Item>
+                                    <Form.Item
+                                        label="最大入住人数"
+                                        name="maxOccupancy"
+                                        initialValue={2}
+                                        rules={[{ required: true, message: '请输入最大入住人数' }]}
+                                    >
+                                        <Input type="number" min={1} max={8} />
+                                    </Form.Item>
+                                    <Form.Item
+                                        label="是否含早"
+                                        name="breakfastIncluded"
+                                        initialValue="no"
+                                    >
+                                        <Select
+                                            options={[
+                                                { label: '不含早', value: 'no' },
+                                                { label: '含早', value: 'yes' }
+                                            ]}
+                                        />
+                                    </Form.Item>
+                                    <Form.Item
+                                        label="取消政策（可选）"
+                                        name="cancellationPolicy"
+                                    >
+                                        <Input.TextArea
+                                            placeholder="例如：入住前 1 天 18:00 前可免费取消，逾期收取首晚房费"
+                                            autoSize={{ minRows: 2, maxRows: 4 }}
+                                        />
+                                    </Form.Item>
+                                    <Form.Item label="房型图片（可选，移动端直接上传）">
+                                        <Upload {...roomUploadProps}>
+                                            {roomImageFiles.length >= 6 ? null : (
+                                                <div>
+                                                    <PlusOutlined />
+                                                    <div style={{ marginTop: 8 }}>上传图片</div>
+                                                </div>
+                                            )}
+                                        </Upload>
+                                    </Form.Item>
+                                    <Form.Item>
+                                        <Space>
+                                            <Button
+                                                type="primary"
+                                                htmlType="submit"
+                                                loading={loading}
+                                            >
+                                                添加房型
+                                            </Button>
+                                            <Button onClick={() => setCurrentStep(1)}>
+                                                返回酒店信息
+                                            </Button>
+                                        </Space>
+                                    </Form.Item>
+                                </Form>
+                            </>
+                        )}
                     </Space>
                 </Card>
 

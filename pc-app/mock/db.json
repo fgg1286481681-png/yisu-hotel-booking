@@ -50,6 +50,40 @@
       "status": "offline",
       "rejectReason": "",
       "updatedAt": 1771946896900
+    },
+    {
+      "id": 2,
+      "name": "A国际酒店",
+      "city": "北京",
+      "address": "a省b市c县",
+      "phone": "",
+      "starLevel": "舒适型 / 3 星",
+      "roomType": "大床房/双床房",
+      "price": 223,
+      "openingDate": "2026-01-27",
+      "nearbyHighlights": "五分钟步行到高铁站",
+      "promotionInfo": "假日八折",
+      "merchantId": 3,
+      "status": "approved",
+      "rejectReason": "",
+      "updatedAt": 1771990020834
+    },
+    {
+      "id": 3,
+      "name": "B国际酒店",
+      "city": "北京",
+      "address": "AAAA",
+      "phone": "",
+      "starLevel": "舒适型 / 3 星",
+      "roomType": "大床房",
+      "price": 234,
+      "openingDate": "2026-01-27",
+      "nearbyHighlights": "",
+      "promotionInfo": "",
+      "merchantId": 4,
+      "status": "approved",
+      "rejectReason": "",
+      "updatedAt": 1771990351649
     }
   ]
 }

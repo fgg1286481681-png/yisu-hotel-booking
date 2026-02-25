@@ -2,7 +2,24 @@ import Taro from '@tarojs/taro';
 
 export type HotelStatus = 'pending' | 'approved' | 'rejected' | 'offline';
 
-// PC 端后台存储的原始酒店结构（与 mock server 保持一致）
+// 房型结构（与后端 roomTypes 字段对齐）
+export interface RoomType {
+  id: number;
+  name: string;
+  description?: string;
+  image?: string;
+  images?: string[];
+  tags?: string[];
+  price: number;
+  originalPrice?: number;
+  area?: string;
+  bedType?: string;
+  maxOccupancy?: number;
+  breakfastIncluded?: boolean;
+  cancellationPolicy?: string;
+}
+
+// PC 端后台存储的原始酒店结构（与 mock server / 后端接口保持一致）
 export interface ServerHotel {
   id: number;
   name: string;
@@ -19,6 +36,16 @@ export interface ServerHotel {
   status: HotelStatus;
   rejectReason?: string;
   updatedAt?: number;
+
+  // 新增：对外展示用字段（如果后端已经直接给出）
+  rating?: number;
+  image?: string;
+  images?: string[];
+  facilities?: string[];
+  starRating?: number;
+  distance?: number;
+  description?: string;
+  roomTypes?: RoomType[];
 }
 
 // 移动端使用的统一酒店结构
@@ -31,6 +58,8 @@ export interface Hotel {
   // 评分 / 图片 / 设施是展示用字段，可根据后台基础信息“推导”或给默认值
   rating: number;
   image: string;
+  // 轮播图图片数组：如果后端返回 images，就优先使用；否则用单张 image 占位
+  images: string[];
   facilities: string[];
   // 1-5 星，方便移动端渲染星级
   starRating: number;
@@ -42,6 +71,9 @@ export interface Hotel {
   phone?: string;
   nearbyHighlights?: string;
   promotionInfo?: string;
+  description?: string;
+  distance?: number;
+  roomTypes?: RoomType[];
 }
 
 // 列表查询参数（与移动端 list 页面保持一致）
@@ -70,35 +102,49 @@ interface PublicHotelDetailResponse {
 
 // 将后台的 ServerHotel 映射为前端统一使用的 Hotel
 function mapServerHotelToClient(h: ServerHotel): Hotel {
-  // 从 starLevel 推一个大致的星级数值
+  // 1）星级：优先使用后端给的 starRating，没有则根据 starLevel 推导
   const level = (h.starLevel || '').toLowerCase();
-  let starRating = 3;
-  if (level.includes('1') || level.includes('经济')) starRating = 1;
-  else if (level.includes('2')) starRating = 2;
-  else if (level.includes('3') || level.includes('舒适')) starRating = 3;
-  else if (level.includes('4') || level.includes('高档')) starRating = 4;
-  else if (level.includes('5') || level.includes('豪华')) starRating = 5;
-
-  // 根据 id 稍微“抖动”出一个稳定的评分 4.0 - 4.9 之间，保证每次展示一致
-  const baseRating = 4 + ((h.id % 10) / 10);
-  const rating = Math.round(baseRating * 10) / 10;
-
-  // 简单根据城市/名称生成一张占位图（真实项目可从后台存储图片 URL）
-  const image = `https://picsum.photos/seed/hotel-${h.id}/800/450`;
-
-  // 从 roomType / nearbyHighlights / promotionInfo 中抽取一些“标签”作为设施展示
-  const facilities: string[] = [];
-  if (h.roomType) {
-    facilities.push(...h.roomType.split(/[、，,]/).map(s => s.trim()).filter(Boolean));
+  let starRating = typeof h.starRating === 'number' ? h.starRating : 3;
+  if (typeof h.starRating !== 'number') {
+    if (level.includes('1') || level.includes('经济')) starRating = 1;
+    else if (level.includes('2')) starRating = 2;
+    else if (level.includes('3') || level.includes('舒适')) starRating = 3;
+    else if (level.includes('4') || level.includes('高档')) starRating = 4;
+    else if (level.includes('5') || level.includes('豪华')) starRating = 5;
   }
-  if (h.nearbyHighlights) {
-    facilities.push('交通便利');
+
+  // 2）评分：优先使用后端 rating，没有则按 id 生成稳定评分
+  let rating: number;
+  if (typeof h.rating === 'number') {
+    rating = h.rating;
+  } else {
+    const baseRating = 4 + ((h.id % 10) / 10);
+    rating = Math.round(baseRating * 10) / 10;
   }
-  if (h.promotionInfo) {
-    facilities.push('优惠活动');
-  }
-  if (facilities.length === 0) {
-    facilities.push('免费 WiFi', '24 小时前台');
+
+  // 3）主图和轮播图：优先使用后端传过来的 image / images
+  const fallbackImage = `https://picsum.photos/seed/hotel-${h.id}/800/450`;
+  const mainImage = h.image || fallbackImage;
+  const images =
+    (h.images && h.images.length > 0 ? h.images : [mainImage]);
+
+  // 4）设施：优先使用后端 facilities；否则从现有字段中“推导”
+  let facilities: string[] = [];
+  if (Array.isArray(h.facilities) && h.facilities.length > 0) {
+    facilities = h.facilities;
+  } else {
+    if (h.roomType) {
+      facilities.push(...h.roomType.split(/[、，,]/).map(s => s.trim()).filter(Boolean));
+    }
+    if (h.nearbyHighlights) {
+      facilities.push('交通便利');
+    }
+    if (h.promotionInfo) {
+      facilities.push('优惠活动');
+    }
+    if (facilities.length === 0) {
+      facilities.push('免费 WiFi', '24 小时前台');
+    }
   }
 
   return {
@@ -108,7 +154,8 @@ function mapServerHotelToClient(h: ServerHotel): Hotel {
     address: h.address,
     price: h.price,
     rating,
-    image,
+    image: mainImage,
+    images,
     facilities,
     starRating,
     starLevel: h.starLevel,
@@ -117,6 +164,9 @@ function mapServerHotelToClient(h: ServerHotel): Hotel {
     phone: h.phone,
     nearbyHighlights: h.nearbyHighlights,
     promotionInfo: h.promotionInfo,
+    description: h.description,
+    distance: h.distance,
+    roomTypes: h.roomTypes,
   };
 }
 
