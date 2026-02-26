@@ -5,6 +5,8 @@ const path = require('path');
 const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
+const bcrypt = require('bcrypt');
+const svgCaptcha = require('svg-captcha');
 
 const app = express();
 const PORT = 3001;
@@ -13,6 +15,16 @@ const DB_PATH = path.join(__dirname, 'db.json');
 
 // In-memory token -> userId mapping
 const tokenStore = new Map();
+
+// In-memory captcha storage: captchaId -> { text, expiresAt }
+const captchaStore = new Map();
+
+// In-memory login failure tracking: email -> { count, lockedUntil }
+const loginFailureStore = new Map();
+
+// 登录失败配置
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION = 15 * 60 * 1000; // 15分钟（毫秒）
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -56,12 +68,108 @@ function sanitizeUser(user) {
     return { id, email, role, displayName };
 }
 
+// 检查账户是否被锁定
+function isAccountLocked(email) {
+    const failure = loginFailureStore.get(email);
+    if (!failure) return false;
+    
+    if (failure.lockedUntil && Date.now() < failure.lockedUntil) {
+        const remainingMinutes = Math.ceil((failure.lockedUntil - Date.now()) / 60000);
+        return { locked: true, remainingMinutes };
+    }
+    
+    // 锁定已过期，清除锁定状态
+    if (failure.lockedUntil && Date.now() >= failure.lockedUntil) {
+        loginFailureStore.delete(email);
+    }
+    
+    return false;
+}
+
+// 记录登录失败
+function recordLoginFailure(email) {
+    const failure = loginFailureStore.get(email) || { count: 0, lockedUntil: null };
+    failure.count += 1;
+    
+    if (failure.count >= MAX_LOGIN_ATTEMPTS) {
+        failure.lockedUntil = Date.now() + LOCKOUT_DURATION;
+    }
+    
+    loginFailureStore.set(email, failure);
+}
+
+// 清除登录失败记录（登录成功时调用）
+function clearLoginFailure(email) {
+    loginFailureStore.delete(email);
+}
+
+// GET /api/auth/captcha 生成验证码
+app.get('/api/auth/captcha', (req, res) => {
+    const captcha = svgCaptcha.create({
+        size: 4, // 验证码长度
+        noise: 2, // 干扰线数量
+        color: true, // 彩色
+        background: '#f0f0f0' // 背景色
+    });
+    
+    const captchaId = `captcha_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const expiresAt = Date.now() + 5 * 60 * 1000; // 5分钟过期
+    
+    captchaStore.set(captchaId, {
+        text: captcha.text.toLowerCase(), // 转为小写用于验证
+        expiresAt
+    });
+    
+    // 清理过期的验证码
+    setTimeout(() => {
+        captchaStore.delete(captchaId);
+    }, 5 * 60 * 1000);
+    
+    return res.json({
+        success: true,
+        captchaId,
+        captchaSvg: captcha.data
+    });
+});
+
 // POST /api/auth/register
-app.post('/api/auth/register', (req, res) => {
-    const { email, password, role, displayName, merchantName } = req.body || {};
+app.post('/api/auth/register', async (req, res) => {
+    const { email, password, role, displayName, merchantName, captchaId, captchaText } = req.body || {};
 
     if (!email || !password || !role) {
         return res.status(400).json({ message: '缺少必要字段' });
+    }
+
+    // 验证验证码
+    if (!captchaId || !captchaText) {
+        return res.status(400).json({ message: '请完成验证码验证' });
+    }
+    
+    const captcha = captchaStore.get(captchaId);
+    if (!captcha) {
+        return res.status(400).json({ message: '验证码已过期，请刷新后重试' });
+    }
+    
+    if (Date.now() > captcha.expiresAt) {
+        captchaStore.delete(captchaId);
+        return res.status(400).json({ message: '验证码已过期，请刷新后重试' });
+    }
+    
+    if (captcha.text !== captchaText.toLowerCase().trim()) {
+        return res.status(400).json({ message: '验证码错误' });
+    }
+    
+    // 验证通过后删除验证码
+    captchaStore.delete(captchaId);
+
+    // 密码强度校验
+    if (password.length < 8) {
+        return res.status(400).json({ message: '密码长度至少8位' });
+    }
+    
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
+    if (!passwordRegex.test(password)) {
+        return res.status(400).json({ message: '密码必须包含大小写字母、数字和特殊字符' });
     }
 
     const db = readDb();
@@ -70,11 +178,15 @@ app.post('/api/auth/register', (req, res) => {
         return res.status(400).json({ message: '用户已存在' });
     }
 
+    // 使用 bcrypt 哈希密码
+    const saltRounds = 10;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+
     const newId = db.users.length ? Math.max(...db.users.map((u) => u.id || 0)) + 1 : 1;
     const user = {
         id: newId,
         email,
-        password, // 明文存储仅用于演示，生产环境请务必加密
+        password: passwordHash, // 存储哈希后的密码
         role,
         displayName: displayName || email,
         merchantName: role === 'merchant' ? merchantName || null : null
@@ -94,16 +206,86 @@ app.post('/api/auth/register', (req, res) => {
 });
 
 // POST /api/auth/login
-app.post('/api/auth/login', (req, res) => {
-    const { email, password } = req.body || {};
+app.post('/api/auth/login', async (req, res) => {
+    const { email, password, captchaId, captchaText } = req.body || {};
     if (!email || !password) {
         return res.status(400).json({ message: '邮箱和密码必填' });
     }
 
+    // 验证验证码
+    if (!captchaId || !captchaText) {
+        return res.status(400).json({ message: '请完成验证码验证' });
+    }
+    
+    const captcha = captchaStore.get(captchaId);
+    if (!captcha) {
+        return res.status(400).json({ message: '验证码已过期，请刷新后重试' });
+    }
+    
+    if (Date.now() > captcha.expiresAt) {
+        captchaStore.delete(captchaId);
+        return res.status(400).json({ message: '验证码已过期，请刷新后重试' });
+    }
+    
+    if (captcha.text !== captchaText.toLowerCase().trim()) {
+        captchaStore.delete(captchaId);
+        return res.status(400).json({ message: '验证码错误' });
+    }
+    
+    // 验证通过后删除验证码
+    captchaStore.delete(captchaId);
+
+    // 检查账户是否被锁定
+    const lockStatus = isAccountLocked(email);
+    if (lockStatus && lockStatus.locked) {
+        return res.status(403).json({ 
+            message: `账户已被锁定，请在 ${lockStatus.remainingMinutes} 分钟后重试` 
+        });
+    }
+
     const db = readDb();
     const user = db.users.find((u) => u.email === email);
-    if (!user || user.password !== password) {
-        return res.status(401).json({ message: '邮箱或密码错误' });
+    
+    // 验证密码（支持旧密码明文和新密码哈希）
+    let passwordValid = false;
+    if (user) {
+        // 检查是否是哈希密码（以 $2b$ 开头）
+        if (user.password.startsWith('$2b$')) {
+            passwordValid = await bcrypt.compare(password, user.password);
+        } else {
+            // 兼容旧密码（明文），但登录成功后会自动升级为哈希
+            passwordValid = user.password === password;
+        }
+    }
+    
+    if (!user || !passwordValid) {
+        recordLoginFailure(email);
+        const failure = loginFailureStore.get(email);
+        const remainingAttempts = MAX_LOGIN_ATTEMPTS - failure.count;
+        
+        if (failure.count >= MAX_LOGIN_ATTEMPTS) {
+            return res.status(403).json({ 
+                message: `登录失败次数过多，账户已被锁定15分钟` 
+            });
+        }
+        
+        return res.status(401).json({ 
+            message: `邮箱或密码错误，还可尝试 ${remainingAttempts} 次` 
+        });
+    }
+
+    // 登录成功，清除失败记录
+    clearLoginFailure(email);
+    
+    // 如果密码是明文，升级为哈希
+    if (!user.password.startsWith('$2b$')) {
+        const saltRounds = 10;
+        const passwordHash = await bcrypt.hash(password, saltRounds);
+        const userIndex = db.users.findIndex((u) => u.id === user.id);
+        if (userIndex !== -1) {
+            db.users[userIndex].password = passwordHash;
+            writeDb(db);
+        }
     }
 
     const token = generateToken(user.id, user.email);

@@ -19,7 +19,7 @@
     {
       "id": 3,
       "email": "1@qq.com",
-      "password": "123456",
+      "password": "$2b$10$sx0QsEw.SoFaPrOxiOXbBujGE0BHt21KENM3GcgHNoczUgP5h13Zi",
       "role": "admin",
       "displayName": "haoran",
       "merchantName": null

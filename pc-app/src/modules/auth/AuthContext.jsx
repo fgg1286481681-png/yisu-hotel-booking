@@ -28,20 +28,30 @@ export function AuthProvider({ children }) {
             .finally(() => setLoading(false));
     }, []);
 
-    const login = async (email, password) => {
-        const res = await authApi.login({ email, password });
-        setUser(res.user);
-        setToken(res.token);
-        window.localStorage.setItem('auth_token', res.token);
-        message.success('登录成功');
+    const login = async (email, password, captchaId, captchaText) => {
+        try {
+            const res = await authApi.login({ email, password, captchaId, captchaText });
+            setUser(res.user);
+            setToken(res.token);
+            window.localStorage.setItem('auth_token', res.token);
+            message.success('登录成功');
+        } catch (error) {
+            // 重新抛出错误，让调用方处理
+            throw error;
+        }
     };
 
     const register = async (payload) => {
-        const res = await authApi.register(payload);
-        setUser(res.user);
-        setToken(res.token);
-        window.localStorage.setItem('auth_token', res.token);
-        message.success('注册成功，已自动登录');
+        try {
+            const res = await authApi.register(payload);
+            setUser(res.user);
+            setToken(res.token);
+            window.localStorage.setItem('auth_token', res.token);
+            message.success('注册成功，已自动登录');
+        } catch (error) {
+            // 重新抛出错误，让调用方处理
+            throw error;
+        }
     };
 
     const logout = () => {
