@@ -35,5 +35,50 @@
     "ignore": [],
     "include": []
   },
-  "editorSetting": {}
+  "editorSetting": {},
+  "subpackages": [
+    {
+      "root": "dist/pages/list",
+      "name": "list",
+      "pages": [
+        {
+          "name": "list",
+          "path": "list",
+          "query": ""
+        }
+      ]
+    },
+    {
+      "root": "dist/pages/detail",
+      "name": "detail",
+      "pages": [
+        {
+          "name": "detail",
+          "path": "detail",
+          "query": ""
+        }
+      ]
+    },
+    {
+      "root": "dist/pages/search",
+      "name": "search",
+      "pages": [
+        {
+          "name": "search",
+          "path": "search",
+          "query": ""
+        }
+      ]
+    }
+  ],
+  "preloadRule": {
+    "pages/index/index": {
+      "network": "all",
+      "packages": ["list"]
+    },
+    "pages/list/list": {
+      "network": "all",
+      "packages": ["detail"]
+    }
+  }
 }

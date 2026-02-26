@@ -31,6 +31,26 @@ export default defineConfig<'vite'>(async (merge, { command, mode }) => {
     framework: 'react',
     compiler: 'vite',
     mini: {
+      // 分包配置
+      subpackages: {
+        'pages/list': {
+          name: 'list',
+          pages: ['pages/list/list']
+        },
+        'pages/detail': {
+          name: 'detail',
+          pages: ['pages/detail/detail']
+        },
+        'pages/search': {
+          name: 'search',
+          pages: ['pages/search/search']
+        }
+      },
+      // 主包入口
+      mainPackage: {
+        name: 'main',
+        pages: ['pages/index/index']
+      },
       postcss: {
         pxtransform: {
           enable: true,
