@@ -35,7 +35,7 @@
     {
       "id": 5,
       "email": "zhr@qq.com",
-      "password": "6670675",
+      "password": "$2b$10$shv95Bva3drZcjAH2E9Vm.VousYXzEhhlo8YHoNZuTjJeXipjIu6S",
       "role": "admin",
       "displayName": "zhr",
       "merchantName": null
@@ -43,7 +43,7 @@
     {
       "id": 6,
       "email": "cx@qq.com",
-      "password": "6670675",
+      "password": "$2b$10$DLYB/PfDsofXAUWkH7Vfo.BWrJDHjCFMBkvKOBjHlD8qPXinHUeo.",
       "role": "merchant",
       "displayName": "cx",
       "merchantName": "晨曦大酒店"
@@ -576,6 +576,23 @@
       "status": "approved",
       "rejectReason": "",
       "updatedAt": 1772095629094
+    },
+    {
+      "id": 32,
+      "name": "易宿海景酒店（上海徐汇复旦大学店）",
+      "city": "上海",
+      "address": "复旦大学对面",
+      "phone": "",
+      "starLevel": "高档型 / 4 星",
+      "roomType": "大床房，双床房",
+      "price": 350,
+      "openingDate": "2025-12-12",
+      "nearbyHighlights": "复旦大学，上交，华东理工大学",
+      "promotionInfo": "连住优惠",
+      "merchantId": 6,
+      "status": "approved",
+      "rejectReason": "",
+      "updatedAt": 1772096516221
     }
   ],
   "roomTypes": [
@@ -873,6 +890,27 @@
       "image": "",
       "images": [],
       "createdAt": 1772095605172
+    },
+    {
+      "id": 14,
+      "hotelId": 32,
+      "name": "标准单人间",
+      "description": "单人床标准",
+      "tags": [
+        "含早饭"
+      ],
+      "price": 250,
+      "originalPrice": 283,
+      "area": "30",
+      "bedType": "大床1.8",
+      "maxOccupancy": 2,
+      "breakfastIncluded": false,
+      "cancellationPolicy": "入住前24小时免费取消",
+      "image": "https://via.placeholder.com/800x600?text=%E6%A0%87%E5%87%86%E5%8D%95%E4%BA%BA%E9%97%B4+1",
+      "images": [
+        "https://via.placeholder.com/800x600?text=%E6%A0%87%E5%87%86%E5%8D%95%E4%BA%BA%E9%97%B4+1"
+      ],
+      "createdAt": 1772096446424
     }
   ]
 }
