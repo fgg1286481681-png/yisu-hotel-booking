@@ -47,6 +47,22 @@
       "role": "merchant",
       "displayName": "cx",
       "merchantName": "晨曦大酒店"
+    },
+    {
+      "id": 7,
+      "email": "3@qq.com",
+      "password": "$2b$10$BrfuR5KR4eE2loGBFrG6OOl5Lk3YPK7gx/mc/S6214RIkg.dZuhIO",
+      "role": "admin",
+      "displayName": "ranran",
+      "merchantName": null
+    },
+    {
+      "id": 8,
+      "email": "4@qq.com",
+      "password": "$2b$10$xKX.E.bTTFNkAM2nJwgtNOqAqzJDZzbAqZcfflXmAaHJyE1PjWlR.",
+      "role": "merchant",
+      "displayName": "ab",
+      "merchantName": "B酒店"
     }
   ],
   "hotels": [
@@ -593,6 +609,40 @@
       "status": "approved",
       "rejectReason": "",
       "updatedAt": 1772096516221
+    },
+    {
+      "id": 33,
+      "name": "新酒店",
+      "city": "北京",
+      "address": "北京二环内",
+      "phone": "",
+      "starLevel": "舒适型 / 3 星",
+      "roomType": "大床房",
+      "price": 177,
+      "openingDate": "2026-01-28",
+      "nearbyHighlights": "王府井",
+      "promotionInfo": "",
+      "merchantId": 4,
+      "status": "approved",
+      "rejectReason": "",
+      "updatedAt": 1772099704950
+    },
+    {
+      "id": 34,
+      "name": "最新酒店",
+      "city": "北京",
+      "address": "北京二环以内",
+      "phone": "",
+      "starLevel": "舒适型 / 3 星",
+      "roomType": "双床房",
+      "price": 188,
+      "openingDate": "2026-02-05",
+      "nearbyHighlights": "王府井三分钟",
+      "promotionInfo": "",
+      "merchantId": 4,
+      "status": "approved",
+      "rejectReason": "",
+      "updatedAt": 1772101096707
     }
   ],
   "roomTypes": [
@@ -911,6 +961,44 @@
         "https://via.placeholder.com/800x600?text=%E6%A0%87%E5%87%86%E5%8D%95%E4%BA%BA%E9%97%B4+1"
       ],
       "createdAt": 1772096446424
+    },
+    {
+      "id": 15,
+      "hotelId": 33,
+      "name": "标准大床房",
+      "description": "30",
+      "tags": [
+        "市区"
+      ],
+      "price": 188,
+      "originalPrice": 208,
+      "area": "30",
+      "bedType": "",
+      "maxOccupancy": 2,
+      "breakfastIncluded": false,
+      "cancellationPolicy": "",
+      "image": "",
+      "images": [],
+      "createdAt": 1772099675262
+    },
+    {
+      "id": 16,
+      "hotelId": 34,
+      "name": "标准大床房",
+      "description": "",
+      "tags": [
+        "市区"
+      ],
+      "price": 188,
+      "originalPrice": 208,
+      "area": "30",
+      "bedType": "",
+      "maxOccupancy": 2,
+      "breakfastIncluded": false,
+      "cancellationPolicy": "",
+      "image": "",
+      "images": [],
+      "createdAt": 1772101049231
     }
   ]
 }

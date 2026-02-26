@@ -166,11 +166,7 @@ app.post('/api/auth/register', async (req, res) => {
     if (password.length < 8) {
         return res.status(400).json({ message: '密码长度至少8位' });
     }
-    
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/;
-    if (!passwordRegex.test(password)) {
-        return res.status(400).json({ message: '密码必须包含大小写字母、数字和特殊字符' });
-    }
+    // 允许纯数字/字母等更宽松的密码；强度提示由前端处理（这里仅做最基本长度校验）
 
     const db = readDb();
     const existing = db.users.find((u) => u.email === email);
@@ -649,7 +645,7 @@ app.post('/api/hotels/:id/room-types', (req, res) => {
         return res.status(403).json({ message: '无权为该酒店创建房型' });
     }
 
-    const { roomTypeJson, images } = req.body;
+    const { roomTypeJson, images } = req.body || {};
 
     // 解析房型数据
     let roomTypeData;

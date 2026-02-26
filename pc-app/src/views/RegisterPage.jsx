@@ -16,7 +16,8 @@ function getPasswordStrength(password) {
     if (/[a-z]/.test(password)) strength++;
     if (/[A-Z]/.test(password)) strength++;
     if (/\d/.test(password)) strength++;
-    if (/[@$!%*?&]/.test(password)) strength++;
+    // 任何非字母数字字符都视为“特殊字符”
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
     
     const configs = [
         { text: '很弱', percent: 20, status: 'exception' },
@@ -112,15 +113,12 @@ export function RegisterPage() {
                         name="password"
                         rules={[
                             { required: true, message: '请输入密码' },
-                            { min: 8, message: '密码长度至少8位' },
-                            {
-                                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
-                                message: '密码必须包含大小写字母、数字和特殊字符'
-                            }
+                            { min: 8, message: '密码长度至少8位' }
                         ]}
+                        extra="至少8位；允许纯数字/字母/符号（建议混合更安全）"
                     >
                         <Input.Password 
-                            placeholder="至少8位，包含大小写字母、数字和特殊字符" 
+                            placeholder="请输入密码（例如：12345678）"
                             onChange={handlePasswordChange}
                         />
                     </Form.Item>
