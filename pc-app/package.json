@@ -1,0 +1,26 @@
+{
+    "name": "yisu-hotel-management-pc",
+    "version": "1.0.0",
+    "private": true,
+    "description": "PC site for hotel information management with React + Vite frontend and Express mock backend for auth (login/register).",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
+        "mock": "node ./mock/server.js",
+        "start": "npm run dev"
+    },
+    "dependencies": {
+        "antd": "^5.20.0",
+        "axios": "^1.7.0",
+        "cors": "^2.8.6",
+        "express": "^5.2.1",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "react-router-dom": "^6.22.3"
+    },
+    "devDependencies": {
+        "@vitejs/plugin-react": "^4.0.0",
+        "vite": "^5.0.0"
+    }
+}
