@@ -33,7 +33,25 @@ export function HotelFormPage() {
         setTableLoading(true);
         try {
             const res = await hotelApi.list(token);
-            setHotels(res.hotels || []);
+            const rawHotels = res.hotels || [];
+
+            // 和后台审核页保持一致：
+            // 1. “待审核（pending）”的酒店优先排在最前面
+            // 2. 同一组内部再按 updatedAt 倒序（最近更新的在前）
+            const sortedHotels = [...rawHotels].sort((a, b) => {
+                const isPendingA = a.status === 'pending' ? 1 : 0;
+                const isPendingB = b.status === 'pending' ? 1 : 0;
+
+                if (isPendingA !== isPendingB) {
+                    return isPendingB - isPendingA;
+                }
+
+                const updatedA = a.updatedAt ? Number(a.updatedAt) : 0;
+                const updatedB = b.updatedAt ? Number(b.updatedAt) : 0;
+                return updatedB - updatedA;
+            });
+
+            setHotels(sortedHotels);
         } catch (e) {
             message.error('加载酒店列表失败');
         } finally {
@@ -149,18 +167,21 @@ export function HotelFormPage() {
             cancellationPolicy: values.cancellationPolicy
         };
 
-        const formData = new FormData();
-        formData.append('roomTypeJson', JSON.stringify(dto));
+        // 后端当前使用 JSON 接收 roomTypeJson / images 字段，不做真实文件解析
+        // 这里将房型数据直接作为 roomTypeJson 传递，图片字段先用占位数组
+        const imagesPayload =
+            roomImageFiles.length > 0
+                ? roomImageFiles.map((_, index) => ({ index }))
+                : [];
 
-        roomImageFiles.forEach((fileWrapper, index) => {
-            // antd Upload 的 file 对象里真正的 File 在 originFileObj
-            const realFile = fileWrapper.originFileObj || fileWrapper;
-            formData.append(`images[${index}]`, realFile);
-        });
+        const payload = {
+            roomTypeJson: dto,
+            images: imagesPayload
+        };
 
         setLoading(true);
         try {
-            await roomTypeApi.create(hotelId, formData, token);
+            await roomTypeApi.create(hotelId, payload, token);
             message.success('房型已创建');
             roomForm.resetFields();
             setRoomImageFiles([]);

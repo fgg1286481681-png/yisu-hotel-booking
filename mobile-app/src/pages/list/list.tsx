@@ -41,8 +41,17 @@ const sortHotelsLocally = (list: Hotel[], sortBy: SortType): Hotel[] => {
       break;
     case 'recommend':
     default:
-      // 智能排序：综合“评分高 + 价格更优”
+      // 智能排序（推荐）：**最新上架 / 最近更新时间优先**，在此基础上综合“评分高 + 价格更优”
       hotelsCopy.sort((a, b) => {
+        const updatedA = (a as any).updatedAt ? Number((a as any).updatedAt) : 0;
+        const updatedB = (b as any).updatedAt ? Number((b as any).updatedAt) : 0;
+
+        // 先按更新时间倒序（最新的在前面）
+        if (updatedB !== updatedA) {
+          return updatedB - updatedA;
+        }
+
+        // 如果更新时间一样或缺失，再按原来的“评分 + 价格”综合得分排序
         const scoreA = (a.rating || 0) * 20 - a.price / 50;
         const scoreB = (b.rating || 0) * 20 - b.price / 50;
         return scoreB - scoreA;

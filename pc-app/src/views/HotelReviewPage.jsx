@@ -23,10 +23,29 @@ export function HotelReviewPage() {
             const listParams = forceStatus || showOffline ? { status: 'offline' } : {};
             const res = await hotelApi.list(token, listParams);
             const allHotels = res.hotels || [];
+
             const visibleHotels = showOffline
                 ? allHotels.filter((h) => h.status === 'offline')
                 : allHotels.filter((h) => h.status !== 'offline');
-            setHotels(visibleHotels);
+
+            // 为了让“最新提交 / 待审核”的酒店永远排在最前面：
+            // 1. 先按是否为待审核(status === 'pending')分组，待审核在前，其它状态在后
+            // 2. 每个分组内部再按 updatedAt 倒序（最新更新时间在前）
+            const sortedHotels = [...visibleHotels].sort((a, b) => {
+                const isPendingA = a.status === 'pending' ? 1 : 0;
+                const isPendingB = b.status === 'pending' ? 1 : 0;
+
+                // 待审核优先：pending 的记录整体排在前面
+                if (isPendingA !== isPendingB) {
+                    return isPendingB - isPendingA;
+                }
+
+                const updatedA = a.updatedAt ? Number(a.updatedAt) : 0;
+                const updatedB = b.updatedAt ? Number(b.updatedAt) : 0;
+                return updatedB - updatedA;
+            });
+
+            setHotels(sortedHotels);
         } catch (e) {
             message.error('加载酒店列表失败');
         } finally {

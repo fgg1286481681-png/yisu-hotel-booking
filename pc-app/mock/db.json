@@ -27,7 +27,7 @@
     {
       "id": 4,
       "email": "2@qq.com",
-      "password": "123456",
+      "password": "$2b$10$a1kFK.Tj7ybqsrgsfdmqJuW.04xOfMEfh1oGJDIyf7cno1f4LzI5q",
       "role": "merchant",
       "displayName": "ranhao",
       "merchantName": "张浩然酒店"
@@ -491,6 +491,91 @@
       "status": "approved",
       "rejectReason": "",
       "updatedAt": 1772165555555
+    },
+    {
+      "id": 27,
+      "name": "易宿城市酒店（北京大学店）",
+      "city": "北京",
+      "address": "北京大学附近300米",
+      "phone": "",
+      "starLevel": "经济型 / 1-2 星",
+      "roomType": "标准间，大床房",
+      "price": 188,
+      "openingDate": "2026-02-05",
+      "nearbyHighlights": "北京大学附近",
+      "promotionInfo": "劳动节游玩住店8折",
+      "merchantId": 3,
+      "status": "offline",
+      "rejectReason": "",
+      "updatedAt": 1772095282980
+    },
+    {
+      "id": 28,
+      "name": "易宿城市酒店（北京大学店）",
+      "city": "北京",
+      "address": "北京大学附近",
+      "phone": "",
+      "starLevel": "经济型 / 1-2 星",
+      "roomType": "标准大床房",
+      "price": 188,
+      "openingDate": "2026-02-05",
+      "nearbyHighlights": "",
+      "promotionInfo": "",
+      "merchantId": 3,
+      "status": "rejected",
+      "rejectReason": "",
+      "updatedAt": 1772094664951
+    },
+    {
+      "id": 29,
+      "name": "易宿城市酒店（北京大学店）",
+      "city": "北京",
+      "address": "北京大学附近",
+      "phone": "",
+      "starLevel": "经济型 / 1-2 星",
+      "roomType": "标准间",
+      "price": 188,
+      "openingDate": "2026-02-05",
+      "nearbyHighlights": "",
+      "promotionInfo": "",
+      "merchantId": 3,
+      "status": "rejected",
+      "rejectReason": "",
+      "updatedAt": 1772094663000
+    },
+    {
+      "id": 30,
+      "name": "易宿城市酒店（清华大学店）",
+      "city": "北京",
+      "address": "清华大学",
+      "phone": "",
+      "starLevel": "舒适型 / 3 星",
+      "roomType": "大床房",
+      "price": 228,
+      "openingDate": "2026-02-05",
+      "nearbyHighlights": "",
+      "promotionInfo": "",
+      "merchantId": 3,
+      "status": "rejected",
+      "rejectReason": "",
+      "updatedAt": 1772095276721
+    },
+    {
+      "id": 31,
+      "name": "易宿城市酒店（清华大学店）",
+      "city": "北京",
+      "address": "清华大学",
+      "phone": "",
+      "starLevel": "经济型 / 1-2 星",
+      "roomType": "标间",
+      "price": 228,
+      "openingDate": "2026-02-05",
+      "nearbyHighlights": "",
+      "promotionInfo": "",
+      "merchantId": 4,
+      "status": "approved",
+      "rejectReason": "",
+      "updatedAt": 1772095629094
     }
   ],
   "roomTypes": [
@@ -769,6 +854,25 @@
         "https://via.placeholder.com/800x600?text=%E4%B8%89%E4%BA%9A%E4%BA%B2%E5%AD%90%E6%B5%B7%E6%99%AF%E5%A5%97%E6%88%BF+1"
       ],
       "createdAt": 1772160000005
+    },
+    {
+      "id": 13,
+      "hotelId": 31,
+      "name": "标准大床房",
+      "description": "",
+      "tags": [
+        "校区"
+      ],
+      "price": 188,
+      "originalPrice": 208,
+      "area": "30",
+      "bedType": "",
+      "maxOccupancy": 2,
+      "breakfastIncluded": false,
+      "cancellationPolicy": "",
+      "image": "",
+      "images": [],
+      "createdAt": 1772095605172
     }
   ]
 }
