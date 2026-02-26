@@ -22,15 +22,13 @@ cd pc-app && npm run dev
 # 启动移动端（微信小程序）
 cd mobile-app && npm run dev:weapp
 
-# 启动移动端（H5）
-cd mobile-app && npm run dev:h5
-```
+# 启动服务器（mock）
+cd pc-app && npm run mock
 
 ## 核心功能
 
 ✅ **数据实时同步**：PC端新增酒店→移动端3秒内可见  
 ✅ **性能优化**：请求缓存+分包加载，列表秒开  
-✅ **多端适配**：微信小程序+H5双端支持
 
 ## 项目结构
 
