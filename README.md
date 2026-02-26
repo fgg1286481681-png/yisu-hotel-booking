@@ -21,6 +21,8 @@ cd pc-app && npm run dev
 
 # 启动移动端（微信小程序）
 cd mobile-app && npm run dev:weapp
+下载微信开发者工具查看效果
+https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html
 
 # 启动服务器（mock）
 cd pc-app && npm run mock
