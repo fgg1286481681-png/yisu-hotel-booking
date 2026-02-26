@@ -1,0 +1,88 @@
+{
+  "miniprogramRoot": "./",
+  "projectname": "myApp",
+  "description": "携程前端大作业用户移动端",
+  "appid": "wx1e6a07a34118a2a0",
+  "setting": {
+    "urlCheck": true,
+    "es6": false,
+    "enhance": false,
+    "compileHotReLoad": false,
+    "postcss": false,
+    "minified": false,
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
+  },
+  "compileType": "miniprogram",
+  "simulatorPluginLibVersion": {},
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "editorSetting": {},
+  "subpackages": [
+    {
+      "root": "dist/pages/list",
+      "name": "list",
+      "pages": [
+        {
+          "name": "list",
+          "path": "list",
+          "query": ""
+        }
+      ]
+    },
+    {
+      "root": "dist/pages/detail",
+      "name": "detail",
+      "pages": [
+        {
+          "name": "detail",
+          "path": "detail",
+          "query": ""
+        }
+      ]
+    },
+    {
+      "root": "dist/pages/search",
+      "name": "search",
+      "pages": [
+        {
+          "name": "search",
+          "path": "search",
+          "query": ""
+        }
+      ]
+    }
+  ],
+  "preloadRule": {
+    "pages/index/index": {
+      "network": "all",
+      "packages": [
+        "list"
+      ]
+    },
+    "pages/list/list": {
+      "network": "all",
+      "packages": [
+        "detail"
+      ]
+    }
+  }
+}

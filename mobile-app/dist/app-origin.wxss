@@ -1,0 +1,58 @@
+@charset "UTF-8";
+/* 全局样式重置 */
+
+/* 基础样式 */
+page {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 28rpx;
+  color: #333;
+  background-color: #fff;
+  line-height: 1.5;
+}
+
+/* 重置边距 */
+.h5-body, .h5-h1, .h5-h2, .h5-h3, .h5-h4, .h5-h5, .h5-h6, .h5-p, .h5-ul, .h5-ol, .h5-li, .h5-figure, .h5-figcaption, .h5-blockquote, .h5-dl, .h5-dd {
+  margin: 0;
+  padding: 0;
+}
+
+/* 列表样式重置 */
+.h5-ul, .h5-ol {
+  list-style: none;
+}
+
+/* 链接样式 */
+.h5-a {
+  color: #1890ff;
+  text-decoration: none;
+}
+
+/* 图片响应式 */
+image {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* 通用工具类 */
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-column {
+  flex-direction: column;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

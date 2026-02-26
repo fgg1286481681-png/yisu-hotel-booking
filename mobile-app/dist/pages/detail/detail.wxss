@@ -1,0 +1,512 @@
+.detail-page {
+  background-color: #f5f5f5;
+  min-height: 100vh;
+  padding-bottom: 120rpx;
+}
+
+.loading-container,
+.error-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.loading-text,
+.error-text {
+  font-size: 32rpx;
+  color: #666;
+}
+
+.hotel-swiper {
+  height: 400rpx;
+}
+
+.swiper-image {
+  width: 100%;
+  height: 100%;
+}
+
+.hotel-info {
+  background: #fff;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.hotel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16rpx;
+}
+
+.hotel-star-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 12rpx;
+}
+
+.star-badge {
+  background: #fff7e6;
+  border-radius: 8rpx;
+  padding: 4rpx 12rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #fa8c16;
+}
+
+.star-text {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.hotel-name {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #333;
+  flex: 1;
+  margin-right: 24rpx;
+}
+
+.hotel-rating {
+  background: linear-gradient(135deg, #ffd700, #ffa500);
+  border-radius: 8rpx;
+  padding: 8rpx 16rpx;
+  display: flex;
+  align-items: center;
+  min-width: 100rpx;
+  justify-content: center;
+}
+
+.rating-text {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #fff;
+}
+
+.rating-label {
+  font-size: 24rpx;
+  color: #fff;
+  margin-left: 4rpx;
+}
+
+.hotel-address {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 16rpx;
+}
+
+.hotel-description {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 24rpx;
+}
+
+.price-section {
+  display: flex;
+  align-items: baseline;
+}
+
+.price-label {
+  font-size: 28rpx;
+  color: #666;
+  margin-right: 16rpx;
+}
+
+.price-amount {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: #1890ff;
+}
+
+.price-unit {
+  font-size: 28rpx;
+  color: #666;
+  margin-left: 8rpx;
+}
+
+.facilities-section,
+.calendar-room-banner,
+.room-types-section {
+  background: #fff;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 24rpx;
+  display: block;
+}
+
+.facilities-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.facility-item {
+  background: #f0f9ff;
+  border: 1rpx solid #91d5ff;
+  border-radius: 8rpx;
+  padding: 12rpx 24rpx;
+}
+
+.facility-text {
+  font-size: 26rpx;
+  color: #1890ff;
+}
+
+/* 日历+人间夜Banner样式 */
+.banner-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.date-selection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f5f5f5;
+  border-radius: 12rpx;
+  padding: 24rpx;
+}
+
+.date-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.date-label {
+  font-size: 24rpx;
+  color: #999;
+  margin-bottom: 8rpx;
+}
+
+.date-value {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.date-separator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 24rpx;
+}
+
+.separator-text {
+  font-size: 24rpx;
+  color: #1890ff;
+  font-weight: 600;
+}
+
+.room-selection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f5f5f5;
+  border-radius: 12rpx;
+  padding: 24rpx;
+}
+
+.room-label {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 600;
+}
+
+.room-value {
+  font-size: 28rpx;
+  color: #1890ff;
+  font-weight: 600;
+}
+
+/* 房型价格列表样式 */
+.room-types-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.room-type-card {
+  display: flex;
+  background: #fff;
+  border-radius: 12rpx;
+  overflow: hidden;
+  border: 1rpx solid #e8e8e8;
+}
+
+.room-type-image {
+  width: 240rpx;
+  height: 240rpx;
+  flex-shrink: 0;
+}
+
+.room-type-info {
+  flex: 1;
+  padding: 24rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.room-type-name {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.room-type-description {
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 16rpx;
+  line-height: 1.4;
+}
+
+.room-type-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-bottom: 16rpx;
+}
+
+.room-type-tag {
+  background: #f0f9ff;
+  border: 1rpx solid #91d5ff;
+  border-radius: 6rpx;
+  padding: 4rpx 12rpx;
+}
+
+.tag-text {
+  font-size: 22rpx;
+  color: #1890ff;
+}
+
+.room-type-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-bottom: 16rpx;
+}
+
+.room-type-detail {
+  font-size: 24rpx;
+  color: #666;
+  background: #f5f5f5;
+  border-radius: 6rpx;
+  padding: 4rpx 12rpx;
+}
+
+.room-type-price {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 8rpx;
+}
+
+.room-type-original-price {
+  font-size: 24rpx;
+  color: #999;
+  text-decoration: line-through;
+  margin-right: 8rpx;
+}
+
+.room-type-current-price {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #ff4d4f;
+  margin-right: 4rpx;
+}
+
+.room-type-price-unit {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.room-type-cancellation {
+  font-size: 22rpx;
+  color: #52c41a;
+  margin-top: 8rpx;
+}
+
+.placeholder-text {
+  font-size: 28rpx;
+  color: #999;
+  text-align: center;
+  padding: 32rpx 0;
+}
+
+/* 房间人数选择模态窗口样式 */
+.room-modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+}
+
+.room-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.room-modal-panel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+  padding: 32rpx;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.room-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32rpx;
+  padding-bottom: 24rpx;
+  border-bottom: 1rpx solid #e8e8e8;
+}
+
+.room-modal-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.room-modal-close {
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  color: #999;
+}
+
+.room-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 32rpx;
+  margin-bottom: 48rpx;
+}
+
+.room-control {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.room-control-label {
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 600;
+}
+
+.room-control-buttons {
+  display: flex;
+  align-items: center;
+  gap: 32rpx;
+}
+
+.room-control-button {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  color: #333;
+  font-weight: 600;
+}
+
+.room-control-value {
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 600;
+  min-width: 120rpx;
+  text-align: center;
+}
+
+.room-modal-footer {
+  display: flex;
+  justify-content: center;
+}
+
+.room-modal-button {
+  background: #1890ff;
+  border-radius: 8rpx;
+  padding: 24rpx 96rpx;
+}
+
+.room-modal-button.confirm {
+  background: #1890ff;
+}
+
+.room-modal-button-text {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #fff;
+}
+
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  padding: 24rpx 32rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1rpx solid #e8e8e8;
+  box-shadow: 0 -2rpx 8rpx rgba(0, 0, 0, 0.1);
+  z-index: 100;
+}
+
+.bottom-price {
+  display: flex;
+  align-items: baseline;
+}
+
+.bottom-price-label {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: #1890ff;
+}
+
+.bottom-price-unit {
+  font-size: 28rpx;
+  color: #666;
+  margin-left: 8rpx;
+}
+
+.book-button {
+  background: #1890ff;
+  border-radius: 8rpx;
+  padding: 24rpx 48rpx;
+}
+
+.book-button-text {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #fff;
+}
