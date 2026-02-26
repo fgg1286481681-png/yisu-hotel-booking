@@ -308,6 +308,7 @@ const ListPage: React.FC = () => {
       const displayData = sortedData.slice(0, 5);
 
       if (isRefresh) {
+        // 刷新时直接覆盖列表
         setHotels(displayData);
         setPage(1);
 
@@ -319,14 +320,34 @@ const ListPage: React.FC = () => {
             duration: 2000,
           });
         }
+
+        // 是否还有更多数据：过滤后总数大于当前展示数量
+        setHasMore(sortedData.length > displayData.length);
+        setTotal(sortedData.length);
       } else {
-        setHotels(prev => [...prev, ...displayData]);
+        // 加载更多时，需要避免因为后端/Mock 忽略分页参数导致的“同一批酒店重复追加”
+        setHotels(prev => {
+          const existingIds = new Set(prev.map(h => h.id));
+          const newItems = displayData.filter(h => !existingIds.has(h.id));
+
+          const merged = [...prev, ...newItems];
+
+          // 如果这一页完全没有带来新的酒店，说明已经到底了，停止继续加载
+          if (newItems.length === 0) {
+            setHasMore(false);
+          } else {
+            // 只有当本页满额且有新增数据时，才认为还有更多
+            setHasMore(displayData.length === newItems.length && displayData.length === 5);
+          }
+
+          // 记录一个大致的总数：取“已加载数量”和“本次过滤总数”的较大值
+          setTotal(prevTotal => Math.max(prevTotal, merged.length, sortedData.length));
+
+          return merged;
+        });
+
         setPage(currentPage + 1);
       }
-
-      // 是否还有更多数据（根据过滤后的总数判断，不是displayData）
-      setHasMore(sortedData.length > 5);
-      setTotal(sortedData.length);
 
     } catch (error) {
       console.error('加载酒店数据失败:', error);
