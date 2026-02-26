@@ -51,7 +51,7 @@ const domesticCities = ['北京', '上海', '广州', '深圳', '杭州', '成�
 // 国外城市列表
 const foreignCities = ['东京', '首尔', '新加坡', '曼谷', '巴黎', '伦敦', '纽约', '悉尼', '迪拜', '洛杉矶'];
 
-// 价格区间快捷选项（0~500+）
+// 价格区间快捷选项（与list页面保持一致）
 const priceQuickOptions = [
   { label: '¥0-200', value: [0, 200] },
   { label: '¥200-300', value: [200, 300] },
@@ -85,6 +85,9 @@ const IndexPage: React.FC = () => {
   // 日历组件状态
   const [showCalendar, setShowCalendar] = useState(false);
   const [calendarMode, setCalendarMode] = useState<'range' | 'single'>('range');
+
+  // 城市选择模态窗口状态
+  const [showCityModal, setShowCityModal] = useState(false);
 
   // 国内/国外切换时使用对应城市列表
   const cities = useMemo(() => (isDomestic ? domesticCities : foreignCities), [isDomestic]);
@@ -240,7 +243,7 @@ const IndexPage: React.FC = () => {
     // 只有当用户选择了星级时才传递星级筛选（空数组表示不限）
     if (starRating.length > 0) {
       // 将数组转换为逗号分隔的字符串，如 "4,5"
-      params.starRating = starRating.join(',') as any;
+      params.starRating = starRating.join(',');
     }
 
     // 构建URL参数
@@ -250,7 +253,7 @@ const IndexPage: React.FC = () => {
     if (params.checkOut) urlParams.set('checkOut', params.checkOut);
     if (params.minPrice !== undefined) urlParams.set('minPrice', String(params.minPrice));
     if (params.maxPrice !== undefined) urlParams.set('maxPrice', String(params.maxPrice));
-    if (params.starRating) urlParams.set('starRating', String(params.starRating));
+    if (params.starRating) urlParams.set('starRating', params.starRating);
 
     Taro.navigateTo({
       url: `/pages/list/list?${urlParams.toString()}`,
@@ -408,13 +411,11 @@ const IndexPage: React.FC = () => {
           </View>
 
           <View className="query-row location-section">
-            <View className="city-picker">
-              <Picker mode="selector" range={cities} onChange={handleCityChange}>
-                <View className="picker-content">
-                  <Text className="city-name">{location.city}</Text>
-                  <Text className="picker-arrow">▼</Text>
-                </View>
-              </Picker>
+            <View className="city-picker" onClick={() => setShowCityModal(true)}>
+              <View className="picker-content">
+                <Text className="city-name">{location.city}</Text>
+                <Text className="picker-arrow">▼</Text>
+              </View>
             </View>
             <View className="search-box" onClick={handleSearchBoxClick}>
               <Text className="search-icon">🔍</Text>
@@ -470,8 +471,20 @@ const IndexPage: React.FC = () => {
                 <Text className="guest-value">{childCount}人</Text>
               </View>
             </View>
-            <View className="price-star-trigger" onClick={() => setShowPriceStarModal(true)}>
-              <Text className="price-star-placeholder">价格/星级</Text>
+            <View
+              className={`price-star-trigger ${priceRange[0] !== 0 || priceRange[1] !== 1000 || starRating.length > 0 ? 'active' : ''}`}
+              onClick={() => setShowPriceStarModal(true)}
+            >
+              <Text className="price-star-placeholder">
+                {priceRange[0] !== 0 || priceRange[1] !== 1000
+                  ? (priceRange[1] >= PRICE_MAX
+                      ? `¥${priceRange[0]}+`
+                      : `¥${priceRange[0]}-${priceRange[1]}`)
+                  : ''}
+                {priceRange[0] !== 0 || priceRange[1] !== 1000 ? ' ' : ''}
+                {starRating.length > 0 ? `${starRating.join(',')}星` : ''}
+                {priceRange[0] === 0 && priceRange[1] === 1000 && starRating.length === 0 ? '价格/星级' : ''}
+              </Text>
             </View>
           </View>
 
@@ -555,11 +568,11 @@ const IndexPage: React.FC = () => {
                 <Text className="modal-price-label">价格区间：¥{priceRange[0]} - ¥{priceRange[1] >= PRICE_MAX ? '500+' : priceRange[1]}</Text>
                 <View className="modal-sliders">
                   <View className="modal-slider-row">
-                    <Text className="modal-slider-min">¥0</Text>
+                    <Text className="modal-slider-min">¥{priceRange[0]}</Text>
                     <Slider
                       className="modal-slider"
                       min={0}
-                      max={PRICE_MAX}
+                      max={500}
                       value={priceRange[0]}
                       onChanging={handlePriceMinChange}
                       onChange={handlePriceMinChange}
@@ -572,8 +585,8 @@ const IndexPage: React.FC = () => {
                     <Text className="modal-slider-min">¥{priceRange[1] >= PRICE_MAX ? '500+' : priceRange[1]}</Text>
                     <Slider
                       className="modal-slider"
-                      min={0}
-                      max={PRICE_MAX}
+                      min={1}
+                      max={500}
                       value={priceRange[1]}
                       onChanging={handlePriceMaxChange}
                       onChange={handlePriceMaxChange}
@@ -688,6 +701,56 @@ const IndexPage: React.FC = () => {
         visible={showCalendar}
         onClose={() => setShowCalendar(false)}
       />
+
+      {/* 城市选择模态窗口 */}
+      {showCityModal && (
+        <View className="city-modal-mask">
+          <View className="city-modal-overlay" onClick={() => setShowCityModal(false)} />
+          <View className="city-modal-panel">
+            <View className="city-modal-header">
+              <Text className="city-modal-title">选择城市</Text>
+              <View className="city-modal-close" onClick={() => setShowCityModal(false)}>
+                <Text>✕</Text>
+              </View>
+            </View>
+            <View className="city-modal-body">
+              <View className="city-modal-tabs">
+                <View
+                  className={`city-modal-tab ${isDomestic ? 'active' : ''}`}
+                  onClick={() => setIsDomestic(true)}
+                >
+                  <Text>国内</Text>
+                </View>
+                <View
+                  className={`city-modal-tab ${!isDomestic ? 'active' : ''}`}
+                  onClick={() => setIsDomestic(false)}
+                >
+                  <Text>国外</Text>
+                </View>
+              </View>
+              <ScrollView className="city-list-scroll" scrollY>
+                <View className="city-list">
+                  {cities.map((city, index) => (
+                    <View
+                      key={city}
+                      className={`city-item ${location.city === city ? 'selected' : ''}`}
+                      onClick={() => {
+                        setLocation({ ...location, city });
+                        setShowCityModal(false);
+                      }}
+                    >
+                      <Text className={`city-item-text ${location.city === city ? 'selected' : ''}`}>{city}</Text>
+                      {location.city === city && (
+                        <Text className="city-item-check">✓</Text>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              </ScrollView>
+            </View>
+          </View>
+        </View>
+      )}
     </View>
   );
 };

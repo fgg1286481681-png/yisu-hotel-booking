@@ -351,9 +351,18 @@
   border: 1rpx dashed #ccc;
 }
 
+.price-star-trigger.active {
+  background: #e6f7ff;
+  border: 1rpx solid #1890ff;
+}
+
+.price-star-trigger.active .price-star-placeholder {
+  color: #1890ff;
+}
+
 .price-star-placeholder {
   font-size: 24rpx;
-  color: #999;
+  color: #333;
 }
 
 /* 地点推荐：仅地名，一行横向滑动 */
@@ -948,4 +957,128 @@
   font-size: 28rpx;
   font-weight: 600;
   color: #fff;
+}
+
+/* 城市选择模态窗口样式 */
+.city-modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+}
+
+.city-modal-overlay {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.city-modal-panel {
+  height: 60vh;
+  min-height: 500rpx;
+  background: #fff;
+  border-radius: 24rpx 24rpx 0 0;
+  box-shadow: 0 -8rpx 32rpx rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.city-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 32rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.city-modal-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.city-modal-close {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  color: #999;
+}
+
+.city-modal-body {
+  flex: 1;
+  overflow: auto;
+  padding: 24rpx 32rpx;
+}
+
+.city-modal-tabs {
+  display: flex;
+  gap: 24rpx;
+  margin-bottom: 24rpx;
+  border-bottom: 1rpx solid #eee;
+  padding-bottom: 16rpx;
+}
+
+.city-modal-tab {
+  padding: 12rpx 24rpx;
+  font-size: 28rpx;
+  color: #666;
+  border-radius: 8rpx;
+}
+
+.city-modal-tab.active {
+  color: #1890ff;
+  background: #e6f7ff;
+  font-weight: 600;
+}
+
+.city-list-scroll {
+  height: 60vh;
+  min-height: 350rpx;
+}
+
+.city-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.city-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+}
+
+.city-item:active {
+  background: #e6f7ff;
+}
+
+.city-item.selected {
+  background: #e6f7ff;
+  border: 1rpx solid #1890ff;
+}
+
+.city-item-text {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.city-item-text.selected {
+  color: #1890ff;
+  font-weight: 600;
+}
+
+.city-item-check {
+  font-size: 28rpx;
+  color: #1890ff;
+  font-weight: 700;
 }

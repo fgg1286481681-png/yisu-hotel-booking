@@ -86,8 +86,8 @@ const ListPage: React.FC = () => {
   const priceQuickOptions: Array<{ label: string; value: [number, number] }> = [
     { label: '¥0-200', value: [0, 200] },
     { label: '¥200-300', value: [200, 300] },
-    { label: '¥300-400', value: [300, 400] },
-    { label: '¥400以上', value: [400, PRICE_MAX] },
+    { label: '¥300-500', value: [300, 500] },
+    { label: '¥500以上', value: [500, PRICE_MAX] },
   ];
 
   const [showPriceModal, setShowPriceModal] = useState(false);
@@ -244,6 +244,9 @@ const ListPage: React.FC = () => {
     setLoading(true);
     const currentPage = isRefresh ? 1 : page;
 
+    // 延迟0.5秒，让加载提示可见
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     try {
       const effectiveSearch = searchOverride || searchParams;
       const effectiveFilters = filtersOverride || filters;
@@ -282,7 +285,7 @@ const ListPage: React.FC = () => {
           return false;
         }
 
-        // 价格上限过滤（当 maxPrice 为 PRICE_MAX 时，表示“400以上”，不再限制上限）
+        // 价格上限过滤（当 maxPrice 为 PRICE_MAX 时，表示"400以上"，不再限制上限）
         if (maxPrice < PRICE_MAX && hotel.price > maxPrice) {
           return false;
         }
@@ -301,12 +304,15 @@ const ListPage: React.FC = () => {
       // 无论后端是否支持排序参数，这里都在前端兜底做一次排序，确保用户所见顺序正确
       const sortedData = sortHotelsLocally(filteredData, effectiveFilters.sortBy as SortType);
 
+      // 强制只取前5条数据（前端分页）
+      const displayData = sortedData.slice(0, 5);
+
       if (isRefresh) {
-        setHotels(sortedData);
+        setHotels(displayData);
         setPage(1);
 
         // 如果是重新筛选后的首次加载且没有匹配酒店，给出友好提示
-        if (sortedData.length === 0) {
+        if (displayData.length === 0) {
           Taro.showToast({
             title: '未搜索到合适的目标',
             icon: 'none',
@@ -314,13 +320,13 @@ const ListPage: React.FC = () => {
           });
         }
       } else {
-        setHotels(prev => [...prev, ...sortedData]);
+        setHotels(prev => [...prev, ...displayData]);
         setPage(currentPage + 1);
       }
 
-      // 是否还有更多数据
-      setHasMore(sortedData.length === 5);
-      setTotal(prev => (isRefresh ? sortedData.length : prev + sortedData.length));
+      // 是否还有更多数据（根据过滤后的总数判断，不是displayData）
+      setHasMore(sortedData.length > 5);
+      setTotal(sortedData.length);
 
     } catch (error) {
       console.error('加载酒店数据失败:', error);
@@ -614,11 +620,11 @@ const ListPage: React.FC = () => {
                 <Text className="modal-price-label">价格区间：¥{draftPriceRange[0]} - ¥{draftPriceRange[1] >= PRICE_MAX ? '500+' : draftPriceRange[1]}</Text>
                 <View className="modal-sliders">
                   <View className="modal-slider-row">
-                    <Text className="modal-slider-min">¥0</Text>
+                    <Text className="modal-slider-min">¥{draftPriceRange[0]}</Text>
                     <Slider
                       className="modal-slider"
                       min={0}
-                      max={PRICE_MIN_MAX}
+                      max={500}
                       value={draftPriceRange[0]}
                       onChanging={handleDraftMinChange}
                       onChange={handleDraftMinChange}
@@ -628,11 +634,11 @@ const ListPage: React.FC = () => {
                     />
                   </View>
                   <View className="modal-slider-row">
-                    <Text className="modal-slider-min">¥{draftPriceRange[1] >= PRICE_MAX ? '400+' : draftPriceRange[1]}</Text>
+                    <Text className="modal-slider-min">¥{draftPriceRange[1] >= PRICE_MAX ? '500+' : draftPriceRange[1]}</Text>
                     <Slider
                       className="modal-slider"
-                      min={0}
-                      max={PRICE_MAX}
+                      min={1}
+                      max={500}
                       value={draftPriceRange[1]}
                       onChanging={handleDraftMaxChange}
                       onChange={handleDraftMaxChange}

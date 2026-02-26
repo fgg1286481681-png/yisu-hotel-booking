@@ -585,7 +585,7 @@
 
 .nav-modal-panel {
   position: fixed;
-  top: 180rpx; /* 导航栏高度 */
+  top: 100rpx; /* 导航栏高度 */
   left: 0;
   right: 0;
   height: 0;
@@ -606,7 +606,7 @@
     transform: translateY(-20rpx);
   }
   to {
-    height: 33vh;
+    height: 50vh;
     min-height: 400rpx;
     opacity: 1;
     transform: translateY(0);
