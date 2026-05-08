@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  password     String
+  displayName  String?
+  role         String   @default("USER")
+  merchantName String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  hotels       Hotel[]
+}
+
+model Hotel {
+  id              Int          @id @default(autoincrement())
+  name            String
+  city            String
+  address         String
+  phone           String?
+  starLevel       String
+  roomType        String
+  price           Int
+  openingDate     String
+  nearbyHighlights String?
+  promotionInfo   String?
+  merchantId      Int
+  status          String       @default("PENDING")
+  rejectReason    String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  merchant        User         @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  roomTypes       RoomType[]
+  orders          Order[]
+}
+
+model RoomType {
+  id                Int      @id @default(autoincrement())
+  hotelId           Int
+  name              String
+  description       String?
+  tagsJson          String   @default("[]")
+  price             Int
+  originalPrice     Int?
+  area              String?
+  bedType           String?
+  maxOccupancy      Int      @default(2)
+  stock             Int      @default(5)
+  breakfastIncluded Boolean  @default(false)
+  cancellationPolicy String?
+  image             String?
+  imagesJson        String   @default("[]")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  hotel             Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  orders            Order[]
+}
+
+model Order {
+  id         Int      @id @default(autoincrement())
+  orderNo    String   @unique
+  hotelId    Int
+  roomTypeId Int
+  guestName  String
+  guestPhone String
+  checkInDate String
+  checkOutDate String
+  roomCount  Int      @default(1)
+  adultCount Int      @default(2)
+  childCount Int      @default(0)
+  nights     Int
+  totalAmount Int
+  status     String   @default("PENDING")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  hotel      Hotel    @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  roomType   RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+}

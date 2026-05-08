@@ -6,8 +6,8 @@
  */
 
 import Taro from '@tarojs/taro';
-import { getHotels as getMockHotels, getHotel as getMockHotel, getCities as getMockCities, Hotel } from '../../../shared/api';
-import { fetchHotelsFromApi, fetchHotelDetailFromApi, fetchRoomTypesFromApi } from './api';
+import { getHotels as getMockHotels, getHotel as getMockHotel, getCities as getMockCities } from '../../../shared/api';
+import { fetchHotelsFromApi, fetchHotelDetailFromApi, fetchRoomTypesFromApi, createOrderApi, fetchOrderDetailApi, payOrderApi, cancelOrderApi } from './api';
 import { adaptHotelFromPC, adaptRoomTypeFromPC, getMockHotelImage, getMockRoomImage } from './adapter';
 import { requestWithRetry } from '../utils/retry';
 
@@ -128,9 +128,9 @@ export async function getHotels(params = {}, useCache = true) {
  * @param {boolean} useCache - 是否使用缓存，默认 true
  * @returns {Promise<Hotel|null>}
  */
-export async function getHotel(id, useCache = true) {
+export async function getHotel(id, useCache = true, params = {}) {
   // 生成缓存 key
-  const cacheKey = getCacheKey(`hotel_${id}`, {});
+  const cacheKey = getCacheKey(`hotel_${id}`, params);
 
   // 尝试从缓存获取
   if (useCache) {
@@ -147,7 +147,7 @@ export async function getHotel(id, useCache = true) {
     try {
       // 调用PC端API（带重试）
       const pcHotel = await requestWithRetry(
-        () => fetchHotelDetailFromApi(id),
+        () => fetchHotelDetailFromApi(id, params),
         {
           maxRetries: 2,
           retryDelay: 1000,
@@ -209,10 +209,10 @@ export async function getCities() {
  * @param {number} hotelId - 酒店ID
  * @returns {Promise<Array>}
  */
-export async function getRoomTypes(hotelId) {
+export async function getRoomTypes(hotelId, params = {}) {
     if (USE_BACKEND_API) {
         try {
-            const roomTypes = await fetchRoomTypesFromApi(hotelId);
+            const roomTypes = await fetchRoomTypesFromApi(hotelId, params);
             if (roomTypes && roomTypes.length > 0) {
                 return roomTypes.map((rt, index) => ({
                     ...adaptRoomTypeFromPC(rt),
@@ -227,6 +227,22 @@ export async function getRoomTypes(hotelId) {
         }
     }
     return [];
+}
+
+export async function createOrder(payload) {
+    return await createOrderApi(payload);
+}
+
+export async function getOrder(id, guestPhone) {
+    return await fetchOrderDetailApi(id, guestPhone);
+}
+
+export async function payOrder(id, guestPhone) {
+    return await payOrderApi(id, guestPhone);
+}
+
+export async function cancelOrder(id, guestPhone) {
+    return await cancelOrderApi(id, guestPhone);
 }
 
 // 导出配置，供调试使用

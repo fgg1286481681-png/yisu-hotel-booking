@@ -245,6 +245,11 @@
   border: 1rpx solid #e8e8e8;
 }
 
+.room-type-card.selected {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2rpx rgba(24, 144, 255, 0.12);
+}
+
 .room-type-image {
   width: 240rpx;
   height: 240rpx;
@@ -335,6 +340,19 @@
   font-size: 22rpx;
   color: #52c41a;
   margin-top: 8rpx;
+}
+
+.room-type-remaining {
+  font-size: 22rpx;
+  margin-top: 8rpx;
+}
+
+.room-type-remaining.available {
+  color: #1890ff;
+}
+
+.room-type-remaining.sold-out {
+  color: #ff4d4f;
 }
 
 .placeholder-text {

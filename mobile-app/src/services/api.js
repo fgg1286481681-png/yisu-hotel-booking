@@ -73,10 +73,11 @@ export async function fetchHotelsFromApi(params = {}) {
  * @param {number} id - 酒店ID
  * @returns {Promise<Object|null>}
  */
-export async function fetchHotelDetailFromApi(id) {
+export async function fetchHotelDetailFromApi(id, params = {}) {
     try {
+        const queryString = buildQueryString(params);
         const data = await request({
-            url: `${API_BASE_URL}/api/public/hotels/${id}`
+            url: `${API_BASE_URL}/api/public/hotels/${id}${queryString}`
         });
         
         if (data.success) {
@@ -94,10 +95,11 @@ export async function fetchHotelDetailFromApi(id) {
  * @param {number} hotelId - 酒店ID
  * @returns {Promise<Array>}
  */
-export async function fetchRoomTypesFromApi(hotelId) {
+export async function fetchRoomTypesFromApi(hotelId, params = {}) {
     try {
+        const queryString = buildQueryString({ hotelId, ...params });
         const data = await request({
-            url: `${API_BASE_URL}/api/roomTypes?hotelId=${hotelId}`
+            url: `${API_BASE_URL}/api/roomTypes${queryString}`
         });
         
         if (data.success) {
@@ -145,6 +147,62 @@ export async function updateHotelStatusApi(id, status, rejectReason, token) {
             'Authorization': `Bearer ${token}`
         },
         data: { status, rejectReason }
+    });
+}
+
+/**
+ * 创建订单
+ * @param {Object} payload - 订单数据
+ * @returns {Promise<Object>}
+ */
+export async function createOrderApi(payload) {
+    return await request({
+        url: `${API_BASE_URL}/api/public/orders`,
+        method: 'POST',
+        header: {
+            'Content-Type': 'application/json'
+        },
+        data: payload
+    });
+}
+
+export async function fetchOrderDetailApi(id, guestPhone) {
+    try {
+        const queryString = buildQueryString({ guestPhone });
+        const data = await request({
+            url: `${API_BASE_URL}/api/public/orders/${id}${queryString}`
+        });
+
+        if (data.success) {
+            return data.order;
+        }
+
+        return null;
+    } catch (error) {
+        console.error('获取订单详情失败:', error);
+        return null;
+    }
+}
+
+export async function payOrderApi(id, guestPhone) {
+    return await request({
+        url: `${API_BASE_URL}/api/public/orders/${id}/pay`,
+        method: 'POST',
+        header: {
+            'Content-Type': 'application/json'
+        },
+        data: { guestPhone }
+    });
+}
+
+export async function cancelOrderApi(id, guestPhone) {
+    return await request({
+        url: `${API_BASE_URL}/api/public/orders/${id}/cancel`,
+        method: 'POST',
+        header: {
+            'Content-Type': 'application/json'
+        },
+        data: { guestPhone }
     });
 }
 

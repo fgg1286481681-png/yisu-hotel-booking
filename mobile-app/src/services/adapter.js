@@ -4,7 +4,6 @@
  * PC端数据 -> 移动端数据 格式转换
  */
 
-import { Hotel, RoomType } from '../../../shared/api';
 
 /**
  * 将PC端酒店数据转换为移动端格式
@@ -71,15 +70,19 @@ export function adaptRoomTypeFromPC(pcRoomType) {
 
     return {
         id: pcRoomType.id,
+        hotelId: pcRoomType.hotelId,
         name: pcRoomType.name || '',
         description: pcRoomType.description || '',
         image: pcRoomType.image || pcRoomType.images?.[0] || 'https://via.placeholder.com/400x300?text=Room',
+        images: pcRoomType.images || [pcRoomType.image || 'https://via.placeholder.com/400x300?text=Room'],
         tags: pcRoomType.tags || [],
         price: pcRoomType.price || 0,
         originalPrice: pcRoomType.originalPrice,
         area: pcRoomType.area,
         bedType: pcRoomType.bedType,
         maxOccupancy: pcRoomType.maxOccupancy || 2,
+        stock: pcRoomType.stock ?? 0,
+        remainingRooms: pcRoomType.remainingRooms ?? pcRoomType.stock ?? 0,
         breakfastIncluded: pcRoomType.breakfastIncluded || false,
         cancellationPolicy: pcRoomType.cancellationPolicy || ''
     };
